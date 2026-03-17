@@ -4,13 +4,20 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>これから。｜理想と現実のギャップ → 選択肢</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <div class="container">
     <header class="header">
-      <h1 class="logo">これから。</h1>
+      <h1 class="logo">
+        <img src="logo.png" alt="これから。" class="logo-img">
+      </h1>
       <p class="tagline">「このままでいいのか。」を最初に相談する場所</p>
+      <button type="button" id="btn-open-history" class="btn-history-link">過去の記録を見る</button>
     </header>
 
     <!-- ステップインジケーター -->
@@ -79,6 +86,19 @@
         <div id="option-cards" class="option-cards">
           <!-- JSで生成 -->
         </div>
+
+        <!-- 保存セクション -->
+        <div class="save-section">
+          <h3 class="save-title">この結果を保存する</h3>
+          <p class="save-desc">氏名とメールアドレスを入力すると、後からいつでも見返せます。</p>
+          <div class="save-form">
+            <input type="text" id="save-name" placeholder="氏名（例：山田 太郎）" class="email-input">
+            <input type="email" id="save-email" placeholder="your@email.com" class="email-input">
+            <button type="button" id="btn-save" class="btn btn-accent">保存する</button>
+          </div>
+          <p id="save-status" class="save-status"></p>
+        </div>
+
         <div class="panel-actions actions-left">
           <button type="button" id="btn-back-step3" class="btn btn-secondary">← 戻る</button>
         </div>
@@ -90,6 +110,25 @@
       <p>Unicara「これから。」キャリア支援ツール</p>
     </footer>
   </div>
+  <!-- 過去の記録モーダル -->
+  <div id="history-modal" class="modal-overlay" hidden>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">過去の記録</h2>
+        <button type="button" id="btn-close-history" class="modal-close">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="history-email-form">
+          <input type="email" id="history-email" placeholder="保存時に使ったメールアドレス" class="email-input">
+          <button type="button" id="btn-load-history" class="btn btn-primary">記録を見る</button>
+        </div>
+        <p id="history-status" class="save-status"></p>
+        <div id="history-list" class="history-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="agents/orchestrator.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

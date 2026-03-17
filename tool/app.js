@@ -1,6 +1,38 @@
 (function () {
   'use strict';
 
+  // ─── Supabase 設定 ────────────────────────────────────────────────────────
+  const SUPABASE_URL = 'https://xtcopreojvmovdswhhgk.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_S2XXYnqCuiEkrGAD9_yHYQ_hMjh1JWe';
+  let db;
+  if (window.supabase) {
+    db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  }
+
+  async function saveSession(name, email) {
+    if (!db) return { error: 'Supabase が読み込まれていません' };
+    const { data, error } = await db.from('sessions').insert([{
+      user_name: name.trim(),
+      user_email: email.trim().toLowerCase(),
+      ideals: state.ideals,
+      scores: state.scores,
+      reasons: state.reasons,
+      improvements: state.improvements,
+      priority_order: state.priorityOrder
+    }]);
+    return { data, error };
+  }
+
+  async function loadSessions(email) {
+    if (!db) return { data: null, error: 'Supabase が読み込まれていません' };
+    const { data, error } = await db
+      .from('sessions')
+      .select('*')
+      .eq('user_email', email.trim().toLowerCase())
+      .order('created_at', { ascending: false });
+    return { data, error };
+  }
+
   const AREAS = ['収入', '働き方', '職場環境', '仕事内容', 'スキル', '生活'];
 
   const IMPROVEMENT_PLACEHOLDERS = {
@@ -26,7 +58,7 @@
     '収入': {
       1: function(imp) {
         return (imp ? '「' + imp + '」を目指す場合、' : '収入目標に向けて、') +
-          '転職で年収レンジ自体を引き上げつつ、副業で収入を積み上げる両輪戦略が最も確実です。転職と副業を同時に設計することで、どちらか一方だけより早く理想に近づけます。まず転職の年収ターゲットを決め、不足分を副業で補う金額を試算するところから始めましょう。';
+          '転職で年収レンジを引き上げながら、UGS（FPエイド活動）で月5〜30万円の副業収入を積み上げる両輪戦略が最も確実です。さらにUGSの節税サポートで月3〜10万円の手残り増加も見込めます。転職の年収ターゲットを決め、不足分をUGS副業でカバーする金額を試算するところから始めましょう。';
       },
       2: function(imp) {
         return (imp ? '「' + imp + '」を実現するには、' : '収入アップには、') +
@@ -34,7 +66,7 @@
       },
       3: function(imp) {
         return (imp ? '「' + imp + '」のうち、' : '収入アップのため、') +
-          '現職を続けながら副業で積み上げる方法です。スキルを活かした副業（コンサル・受託・教える等）で不足分をカバーする計画が立てやすいです。まず週5〜10時間でできる形から始め、単価と稼働時間を徐々に伸ばしましょう。';
+          '現職を続けながらUGS（FPエイド活動）で副業収入を積み上げる方法が最短ルートです。ライフプラン相談の初期担当として業務委託報酬を得ながら、節税で手残りも増やす二重の収入改善が狙えます。まず専属マネージャーと月5万円の目標から設計しましょう。';
       },
       4: function(imp) {
         return (imp ? '「' + imp + '」に向けて、' : '収入改善に向けて、') +
@@ -44,7 +76,7 @@
     '働き方': {
       1: function(imp) {
         return (imp ? '「' + imp + '」を実現するには、' : '働き方を変えるには、') +
-          '転職先の働き方条件（リモート・フレックス・残業実態）を選考軸に入れつつ、副業で時間・場所の自由度を高める組み合わせが有効です。本業の環境を変えた上で、副業でさらに自律的な働き方を設計できます。';
+          '転職先の働き方条件（リモート・フレックス・残業実態）を選考軸に入れつつ、UGS副業で時間・場所の自由度を高める組み合わせが有効です。本業の環境を変えた上で、UGSのFPエイド活動（週数時間からスタート可能）でさらに自律的な働き方を設計できます。';
       },
       2: function(imp) {
         return (imp ? '「' + imp + '」を転職条件に入れることが、' : '転職の条件に働き方を入れることが、') +
@@ -52,7 +84,7 @@
       },
       3: function(imp) {
         return (imp ? '「' + imp + '」と並行して、' : '働き方の自由度を上げるために、') +
-          '副業で自分の裁量で動ける時間を持つことが有効です。副業の稼働時間・場所・仕事内容を自分で設計できるため、理想の働き方を小さく試す場にもなります。';
+          'UGS副業（FPエイド活動）で自分の裁量で動ける時間を持つことが有効です。稼働時間・場所・案件を自分でコントロールできるため、現職を続けながら理想の働き方を小さく試す場にもなります。';
       },
       4: function(imp) {
         return (imp ? '「' + imp + '」に向けて、' : '働き方の改善に向けて、') +
@@ -62,7 +94,7 @@
     '職場環境': {
       1: function(imp) {
         return (imp ? '「' + imp + '」を目指すなら、' : '職場環境を変えるには、') +
-          '転職で環境を一新しつつ、副業で全く別のコミュニティ・評価環境に触れることで、比較軸が生まれ次の選択がしやすくなります。現職の人間関係をリセットする最も確実な方法が転職です。';
+          '転職で環境を一新しつつ、UGS副業で全く別のコミュニティ・評価環境に触れることで、比較軸が生まれ次の選択がしやすくなります。UGSの専属マネージャーや同じ会社員仲間との週1MTGが、現職以外のサポート環境にもなります。';
       },
       2: function(imp) {
         return (imp ? '「' + imp + '」を実現するには、' : '職場環境の改善には、') +
@@ -70,7 +102,7 @@
       },
       3: function(imp) {
         return (imp ? '「' + imp + '」と並行して、' : '現職の環境とは別に、') +
-          '副業で自分が快適に働けるコミュニティや人間関係に触れることで、「こういう環境がいい」という基準が具体的になります。次の転職先選びの判断軸にもなります。';
+          'UGSのコミュニティ（同じ会社員仲間・専属マネージャー）で自分が快適に活動できる人間関係に触れることで、「こういう環境がいい」という基準が具体的になります。次の転職先選びの判断軸にもなります。';
       },
       4: function(imp) {
         return (imp ? '「' + imp + '」に向けて、' : '職場環境の改善に向けて、') +
@@ -80,7 +112,7 @@
     '仕事内容': {
       1: function(imp) {
         return (imp ? '「' + imp + '」を目指す場合、' : '仕事内容を変えるには、') +
-          '転職で職種・業務内容を刷新しつつ、副業で自分の裁量でやりたい仕事に挑戦する組み合わせが有効です。本業で経験を積み、副業で実践するサイクルが成長と市場価値を加速させます。';
+          '転職で職種・業務内容を刷新しつつ、UGS副業（FPエイド活動）で自分の裁量でライフプラン相談業務に挑戦する組み合わせが有効です。本業で経験を積み、UGSで「人の人生に関わる仕事」を実践するサイクルが成長と市場価値を加速させます。';
       },
       2: function(imp) {
         return (imp ? '「' + imp + '」を条件に加えた転職が、' : '仕事内容の転換には、') +
@@ -88,7 +120,7 @@
       },
       3: function(imp) {
         return (imp ? '「' + imp + '」に挑戦するために、' : '仕事内容の多様化のために、') +
-          '副業で本業とは別の仕事に挑戦する方法です。スモールスタートでやりたい仕事を試せるため、リスクを抑えながら適性・需要・単価を確認できます。副業の実績が転職時のアピールにもなります。';
+          'UGS副業（FPエイド活動）で本業とは全く別の「人の人生相談に関わる仕事」に挑戦できます。スモールスタートで適性と需要を確認しながら、コミュニケーション・金融・ライフプランのスキルが実践で身につきます。';
       },
       4: function(imp) {
         return (imp ? '「' + imp + '」に向けて、' : '仕事内容の見直しに向けて、') +
@@ -98,7 +130,7 @@
     'スキル': {
       1: function(imp) {
         return (imp ? '「' + imp + '」を達成するには、' : 'スキルを伸ばすには、') +
-          '転職で実務経験を積める環境に移りつつ、副業でそのスキルを外部で試す組み合わせが市場価値を最も高めます。インプット（転職先での実務）とアウトプット（副業での実践）の両輪が成長を加速します。';
+          '転職で実務経験を積める環境に移りつつ、UGS副業でそのスキルを外部で試す組み合わせが市場価値を最も高めます。UGSでは「対人折衝能力・マネーリテラシー・投資判断」というAI時代に代替不可能なスキルが実践で身につきます。';
       },
       2: function(imp) {
         return (imp ? '「' + imp + '」のために、' : 'スキルアップのために、') +
@@ -106,7 +138,7 @@
       },
       3: function(imp) {
         return (imp ? '「' + imp + '」に向けて、' : 'スキルの実践のために、') +
-          '副業でスキルに対して報酬をもらう経験が市場価値を飛躍的に高めます。まず1件、無理のない範囲で受けてみることが最初の一歩です。副業の実績がポートフォリオになり、転職でも有利になります。';
+          'UGS（FPエイド活動）でスキルに対して報酬をもらう経験が市場価値を飛躍的に高めます。UGS Campusでの100本超の動画学習＋専属マネージャーとの実践サポートで、再現性ある稼ぐスキルを最短で構築できます。';
       },
       4: function(imp) {
         return (imp ? '「' + imp + '」に向けて、' : 'スキル向上に向けて、') +
@@ -116,7 +148,7 @@
     '生活': {
       1: function(imp) {
         return (imp ? '「' + imp + '」を実現するには、' : '理想の生活を実現するには、') +
-          '転職で働き方・勤務地・拘束時間を変えつつ、副業で収入の柔軟性を持つ組み合わせが、生活設計の自由度を最も高めます。収入と時間の両方を手に入れる戦略です。';
+          '転職で働き方・勤務地・拘束時間を変えつつ、UGS副業で収入の柔軟性を持つ組み合わせが、生活設計の自由度を最も高めます。UGSの節税サポートで手残りを増やしながら長期的な資産形成も並走できます。';
       },
       2: function(imp) {
         return (imp ? '「' + imp + '」を実現するには、' : '理想の生活を実現するには、') +
@@ -124,7 +156,7 @@
       },
       3: function(imp) {
         return (imp ? '「' + imp + '」のために、' : '生活の質を高めるために、') +
-          '副業で収入に余白を作ることで、生活の選択肢が広がります。収入の柱を増やすことで現職への依存度が下がり、無理に残業する必要がなくなる等、生活設計の自由度が上がります。';
+          'UGS副業で収入に余白を作ることで、生活の選択肢が広がります。FPエイド活動で月5〜30万円の収入柱を作れば現職への依存度が下がり、無理に残業する必要がなくなります。節税効果で手残りも月3〜10万円増える可能性があります。';
       },
       4: function(imp) {
         return (imp ? '「' + imp + '」に向けて、' : '生活改善に向けて、') +
@@ -134,16 +166,16 @@
   };
 
   const OPTIONS = [
-    { id: 1, name: '① 転職＋副業' },
-    { id: 2, name: '② 転職' },
-    { id: 3, name: '③ 副業' },
-    { id: 4, name: '④ 現状の見直し' }
+    { id: 1, name: '① 転職＋UGS副業', recommended: true },
+    { id: 2, name: '② 転職', recommended: false },
+    { id: 3, name: '③ UGS副業から始める', recommended: false },
+    { id: 4, name: '④ 現状の見直し', recommended: false }
   ];
 
   const OPTION_META = {
-    1: { reach: '収入・スキル・働き方など広く', risk: '高（環境変化＋時間・体力）', time: '数ヶ月〜1年', next: '転職軸の整理＋副業形態・時間の検討' },
+    1: { reach: '収入・スキル・働き方・生活など広く', risk: '高（環境変化＋時間・体力）', time: '数ヶ月〜1年', next: '転職軸の整理＋UGSでの副業設計を並行スタート' },
     2: { reach: '収入・働き方・職場環境・仕事内容など', risk: '高（環境が変わる）', time: '数ヶ月〜1年', next: '判断軸の整理 → 求人検討' },
-    3: { reach: '収入・スキル・生活など', risk: '中（時間・体力）', time: '数ヶ月〜', next: '副業形態・時間の検討' },
+    3: { reach: '収入・スキル・生活・マネーリテラシーなど', risk: '低〜中（現職維持のまま）', time: '3ヶ月〜', next: 'UGS参加 → FPエイド活動でまず月5万を目標に' },
     4: { reach: '職場環境・働き方・仕事内容など', risk: '低（現状維持の延長）', time: '継続的', next: '現職で交渉・調整できることの洗い出し' }
   };
 
@@ -402,6 +434,13 @@
     // 上位3領域を優先表示に使う
     const topAreas = state.priorityOrder.slice(0, 3);
 
+    // AIエージェント分析を開始
+    if (bridgeEl) {
+      bridgeEl.textContent = '1位：' + (topAreas[0] || '—') + '、2位：' + (topAreas[1] || '—') + '、3位：' + (topAreas[2] || '—') + ' を優先改善する想定で分析します。';
+    }
+    runAgentAnalysis();
+    return; // 以降の静的レンダリングはスキップ
+
     const bridgeText = topAreas.length > 0
       ? '1位：' + topAreas[0] + '、2位：' + (topAreas[1] || '—') + '、3位：' + (topAreas[2] || '—') + ' を優先改善する想定で、4つの選択肢を提示します。'
       : '理想と現実のギャップを踏まえて、4つの選択肢とそれぞれの根拠をまとめました。';
@@ -455,6 +494,177 @@
       items.push({ area: '全体', text: '理想と現実の差を埋める一つの道として、この選択肢を検討できます。' });
     }
     return items;
+  }
+
+  // ─── Step 4: AIエージェント分析 ───────────────────────────────────────
+
+  function renderAgentLoading() {
+    const container = getEl('option-cards');
+    if (!container) return;
+    container.innerHTML = (
+      '<div class="agent-loading">' +
+        '<div class="agent-loading-title">4人のエージェントが並列分析中…</div>' +
+        '<div class="agent-progress-list">' +
+          '<div class="agent-progress-item" id="progress-career-strategist">' +
+            '<span class="agent-icon">💼</span><span class="agent-name">キャリア戦略家</span>' +
+            '<span class="agent-status loading">分析中…</span>' +
+          '</div>' +
+          '<div class="agent-progress-item" id="progress-life-planner">' +
+            '<span class="agent-icon">🏠</span><span class="agent-name">ライフ設計士</span>' +
+            '<span class="agent-status loading">分析中…</span>' +
+          '</div>' +
+          '<div class="agent-progress-item" id="progress-income-analyst">' +
+            '<span class="agent-icon">💰</span><span class="agent-name">収入アナリスト</span>' +
+            '<span class="agent-status loading">分析中…</span>' +
+          '</div>' +
+          '<div class="agent-progress-item" id="progress-psychology-coach">' +
+            '<span class="agent-icon">🧠</span><span class="agent-name">心理・動機分析官</span>' +
+            '<span class="agent-status loading">分析中…</span>' +
+          '</div>' +
+        '</div>' +
+        '<div class="agent-synthesizing" id="agent-synthesizing" hidden>' +
+          '<span class="synthesizing-dot"></span>シニアコンサルタントが統合分析中…' +
+        '</div>' +
+      '</div>'
+    );
+  }
+
+  function updateAgentProgress(agentType, success) {
+    const el = getEl('progress-' + agentType);
+    if (!el) return;
+    const status = el.querySelector('.agent-status');
+    if (status) {
+      status.textContent = success ? '完了 ✓' : 'エラー';
+      status.className = 'agent-status ' + (success ? 'done' : 'error');
+    }
+  }
+
+  function renderAgentResults(result, bridgeEl) {
+    const container = getEl('option-cards');
+    if (!container || !result) return;
+
+    if (bridgeEl) bridgeEl.textContent = '';
+
+    const optionsHtml = (result.options || []).map(function (opt) {
+      const isRec = opt.recommended;
+      const rationaleHtml = (
+        '<div class="agent-rationale-grid">' +
+          '<div class="rationale-agent-item"><span class="agent-tag career">💼 キャリア戦略家</span><p>' + escapeHtml(opt.rationale.career || '') + '</p></div>' +
+          '<div class="rationale-agent-item"><span class="agent-tag life">🏠 ライフ設計士</span><p>' + escapeHtml(opt.rationale.life || '') + '</p></div>' +
+          '<div class="rationale-agent-item"><span class="agent-tag income">💰 収入アナリスト</span><p>' + escapeHtml(opt.rationale.income || '') + '</p></div>' +
+          '<div class="rationale-agent-item"><span class="agent-tag psych">🧠 心理分析官</span><p>' + escapeHtml(opt.rationale.psychology || '') + '</p></div>' +
+        '</div>'
+      );
+      return (
+        '<div class="option-card' + (isRec ? ' option-card-recommended' : '') + '">' +
+          (isRec ? '<div class="recommended-badge">⭐ 推奨</div>' : '') +
+          '<h3 class="option-card-title">' + escapeHtml(opt.title || opt.type) + '</h3>' +
+          '<p class="option-summary">' + escapeHtml(opt.summary || '') + '</p>' +
+          '<div class="option-card-rationale">' +
+            '<div class="option-card-rationale-title">4人のエージェントからの根拠</div>' +
+            rationaleHtml +
+          '</div>' +
+          '<div class="option-footer">' +
+            '<div class="option-next-action"><span class="footer-label">今すぐできる一歩</span>' + escapeHtml(opt.nextAction || '') + '</div>' +
+            '<div class="option-risk"><span class="footer-label">リスク</span>' + escapeHtml(opt.risk || '') + '</div>' +
+          '</div>' +
+        '</div>'
+      );
+    }).join('');
+
+    const handover = result.consultantHandover || {};
+    const handoverHtml = (
+      '<div class="handover-section">' +
+        '<h3 class="handover-title">📋 コンサルタント引き継ぎサマリー</h3>' +
+        '<div class="handover-summary">' + escapeHtml(handover.summary || '') + '</div>' +
+        '<div class="handover-grid">' +
+          '<div class="handover-item"><span class="footer-label">深掘りすべき問い</span>' + escapeHtml(handover.keyQuestion || '') + '</div>' +
+          '<div class="handover-item"><span class="footer-label">注意ポイント</span>' + escapeHtml(handover.watchOut || '') + '</div>' +
+        '</div>' +
+      '</div>'
+    );
+
+    container.innerHTML = optionsHtml + handoverHtml;
+  }
+
+  async function runAgentAnalysis() {
+    if (!window.CareerAgents) {
+      const container = getEl('option-cards');
+      if (container) container.innerHTML = '<p class="agent-error">エージェントの読み込みに失敗しました。ページを再読み込みしてください。</p>';
+      return;
+    }
+
+    renderAgentLoading();
+
+    try {
+      const result = await window.CareerAgents.orchestrate(state, {
+        onAgentDone: function (agentType, res) {
+          updateAgentProgress(agentType, res !== null);
+          // 全エージェント完了後、シンセサイザー開始を表示
+          const allDone = ['career-strategist', 'life-planner', 'income-analyst', 'psychology-coach']
+            .every(function (t) {
+              const el = getEl('progress-' + t);
+              const s = el && el.querySelector('.agent-status');
+              return s && (s.classList.contains('done') || s.classList.contains('error'));
+            });
+          if (allDone) {
+            const synthEl = getEl('agent-synthesizing');
+            if (synthEl) synthEl.hidden = false;
+          }
+        }
+      });
+      renderAgentResults(result, getEl('bridge-message'));
+    } catch (err) {
+      const container = getEl('option-cards');
+      if (container) {
+        container.innerHTML = '<div class="agent-error">分析中にエラーが発生しました。<br><small>' + escapeHtml(err.message) + '</small></div>';
+      }
+    }
+  }
+
+  // ─── 履歴レンダリング ──────────────────────────────────────────────────
+
+  function renderHistoryList(sessions) {
+    return sessions.map(function (s) {
+      const date = new Date(s.created_at);
+      const dateStr = date.getFullYear() + '年' + (date.getMonth() + 1) + '月' + date.getDate() + '日 ' +
+        ('0' + date.getHours()).slice(-2) + ':' + ('0' + date.getMinutes()).slice(-2);
+      const priorities = (s.priority_order || []).slice(0, 3);
+      const scores = s.scores || {};
+      const ideals = s.ideals || {};
+      const improvements = s.improvements || {};
+
+      const summaryItems = priorities.map(function (area, i) {
+        const score = scores[area] || '—';
+        const gap = score !== '—' ? (10 - score) + '点差' : '';
+        return '<span class="history-priority-item"><strong>' + (i + 1) + '位</strong> ' + area + '（' + score + '点/' + gap + '）</span>';
+      }).join('');
+
+      const detailRows = (s.priority_order || []).map(function (area) {
+        const score = scores[area] || '—';
+        const ideal = ideals[area] || '—';
+        const imp = improvements[area] || '—';
+        return (
+          '<div class="history-detail-row">' +
+            '<div class="history-detail-area">' + area + '（' + score + '点）</div>' +
+            '<div class="history-detail-item"><span>理想：</span>' + escapeHtml(ideal) + '</div>' +
+            '<div class="history-detail-item"><span>改善：</span>' + escapeHtml(imp) + '</div>' +
+          '</div>'
+        );
+      }).join('');
+
+      return (
+        '<div class="history-item">' +
+          '<div class="history-item-header">' +
+            '<span class="history-item-name">' + escapeHtml(s.user_name || '名前なし') + '</span>' +
+            '<span class="history-item-date">' + dateStr + '</span>' +
+          '</div>' +
+          '<div class="history-item-summary">' + summaryItems + '</div>' +
+          '<button type="button" class="history-toggle">詳細を見る ▼</button>' +
+          '<div class="history-item-detail" hidden>' + detailRows + '</div>' +
+        '</div>'
+      );
+    }).join('');
   }
 
   // ─── ステップ切り替え ──────────────────────────────────────────────────
@@ -520,6 +730,91 @@
     if (b) b.addEventListener('click', function () {
       renderStep3();
       setStep(3);
+    });
+
+    // 保存する（btnSave にローカル変数でキャプチャ）
+    var btnSave = getEl('btn-save');
+    if (btnSave) btnSave.addEventListener('click', async function () {
+      const name = (getEl('save-name') || {}).value || '';
+      const email = (getEl('save-email') || {}).value || '';
+      const status = getEl('save-status');
+      if (!name.trim()) {
+        if (status) { status.textContent = '氏名を入力してください。'; status.className = 'save-status error'; }
+        return;
+      }
+      if (!email.trim() || !email.includes('@')) {
+        if (status) { status.textContent = 'メールアドレスを正しく入力してください。'; status.className = 'save-status error'; }
+        return;
+      }
+      btnSave.disabled = true;
+      btnSave.textContent = '保存中…';
+      const { error } = await saveSession(name, email);
+      if (error) {
+        btnSave.disabled = false;
+        btnSave.textContent = '保存する';
+        if (status) { status.textContent = '保存に失敗しました：' + error.message; status.className = 'save-status error'; }
+      } else {
+        btnSave.textContent = '保存済み ✓';
+        if (status) { status.textContent = '保存しました！このメールアドレスで後から見返せます。'; status.className = 'save-status success'; }
+      }
+    });
+
+    // 過去の記録モーダルを開く
+    b = getEl('btn-open-history');
+    if (b) b.addEventListener('click', function () {
+      const modal = getEl('history-modal');
+      if (modal) modal.hidden = false;
+    });
+
+    // モーダルを閉じる
+    b = getEl('btn-close-history');
+    if (b) b.addEventListener('click', function () {
+      const modal = getEl('history-modal');
+      if (modal) modal.hidden = true;
+      const list = getEl('history-list');
+      if (list) list.innerHTML = '';
+      const st = getEl('history-status');
+      if (st) { st.textContent = ''; st.className = 'save-status'; }
+    });
+
+    // 記録を読み込む（btnLoad にローカル変数でキャプチャ）
+    var btnLoad = getEl('btn-load-history');
+    if (btnLoad) btnLoad.addEventListener('click', async function () {
+      const email = (getEl('history-email') || {}).value || '';
+      const status = getEl('history-status');
+      const list = getEl('history-list');
+      if (!email.trim() || !email.includes('@')) {
+        if (status) { status.textContent = 'メールアドレスを正しく入力してください。'; status.className = 'save-status error'; }
+        return;
+      }
+      btnLoad.disabled = true;
+      btnLoad.textContent = '読み込み中…';
+      const { data, error } = await loadSessions(email);
+      btnLoad.disabled = false;
+      btnLoad.textContent = '記録を見る';
+      if (error) {
+        if (status) { status.textContent = '読み込みに失敗しました。'; status.className = 'save-status error'; }
+        return;
+      }
+      if (!data || data.length === 0) {
+        if (status) { status.textContent = 'この메ールアドレスの記録は見つかりませんでした。'; status.className = 'save-status error'; }
+        if (list) list.innerHTML = '';
+        return;
+      }
+      if (status) { status.textContent = data.length + '件の記録が見つかりました。'; status.className = 'save-status success'; }
+      if (list) {
+        list.innerHTML = renderHistoryList(data);
+        list.querySelectorAll('.history-toggle').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            const detail = btn.nextElementSibling;
+            if (detail) {
+              const isHidden = detail.hidden;
+              detail.hidden = !isHidden;
+              btn.textContent = isHidden ? '詳細を閉じる ▲' : '詳細を見る ▼';
+            }
+          });
+        });
+      }
     });
   }
 
