@@ -4,7 +4,7 @@
  */
 
 const EDGE_FUNCTION_URL = 'https://xtcopreojvmovdswhhgk.supabase.co/functions/v1/agent';
-const SUPABASE_ANON_KEY = 'sb_publishable_S2XXYnqCuiEkrGAD9_yHYQ_hMjh1JWe';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0Y29wcmVvanZtb3Zkc3doaGdrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3MjkzMjQsImV4cCI6MjA4OTMwNTMyNH0.l_ylqxCQ9LJDdPEBd_pbzjzk4N9v6hovqP2MOn1cGMQ';
 
 // 領域名（日本語 → UserInput キー）のマッピング
 const AREA_KEY_MAP = {
