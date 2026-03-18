@@ -560,13 +560,19 @@
           .replace(/UGS副業/g, '副業')
           .replace(/UGS/g, '副業');
       }
+      // 根拠テキストに改行を入れて読みやすくする（「→」「。」の後で改行）
+      function formatRationale(s) {
+        return escapeHtml(fixUGS(s))
+          .replace(/→\s*/g, '→\n')
+          .replace(/。(?=[^\n])/g, '。\n');
+      }
       const title = fixUGS(opt.title || opt.type || '');
       const rationaleHtml = (
         '<div class="agent-rationale-grid">' +
-          '<div class="rationale-agent-item"><span class="agent-tag career">💼 キャリア戦略家</span><p>' + escapeHtml(fixUGS(opt.rationale.career)) + '</p></div>' +
-          '<div class="rationale-agent-item"><span class="agent-tag life">🏠 ライフ設計士</span><p>' + escapeHtml(fixUGS(opt.rationale.life)) + '</p></div>' +
-          '<div class="rationale-agent-item"><span class="agent-tag income">💰 収入アナリスト</span><p>' + escapeHtml(fixUGS(opt.rationale.income)) + '</p></div>' +
-          '<div class="rationale-agent-item"><span class="agent-tag psych">🧠 心理分析官</span><p>' + escapeHtml(fixUGS(opt.rationale.psychology)) + '</p></div>' +
+          '<div class="rationale-agent-item"><span class="agent-tag career">💼 キャリア戦略家</span><p>' + formatRationale(opt.rationale.career) + '</p></div>' +
+          '<div class="rationale-agent-item"><span class="agent-tag life">🏠 ライフ設計士</span><p>' + formatRationale(opt.rationale.life) + '</p></div>' +
+          '<div class="rationale-agent-item"><span class="agent-tag income">💰 収入アナリスト</span><p>' + formatRationale(opt.rationale.income) + '</p></div>' +
+          '<div class="rationale-agent-item"><span class="agent-tag psych">🧠 心理分析官</span><p>' + formatRationale(opt.rationale.psychology) + '</p></div>' +
         '</div>'
       );
       const card = (
@@ -733,6 +739,11 @@
     if (b) b.addEventListener('click', function () {
       renderStep3();
       setStep(3);
+    });
+
+    b = getEl('btn-pdf');
+    if (b) b.addEventListener('click', function () {
+      window.print();
     });
 
     // 保存する（btnSave にローカル変数でキャプチャ）
