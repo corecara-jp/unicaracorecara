@@ -497,7 +497,7 @@
       '<div class="case-study-card">' +
         '<div class="case-study-header">' +
           '<span class="case-study-badge">成功事例</span>' +
-          '<span class="case-study-name">野々垣さん（Unicaraロールモデル）</span>' +
+          '<span class="case-study-name">野々垣さん（これから。ロールモデル）</span>' +
         '</div>' +
         '<div class="case-study-photo-wrap">' +
           '<img src="nogaki.jpeg" alt="野々垣さん" class="case-study-photo">' +
@@ -515,7 +515,7 @@
           '<div class="timeline-item">' +
             '<span class="timeline-dot">2年目</span>' +
             '<div class="timeline-body">' +
-              '<strong>「コトを売る」営業スキルを転職先で習得</strong>' +
+              '<strong>顧客の課題を解決する「コトを売る」営業スキルを転職先で習得</strong>' +
               '<p>副業と本業を並走。「なぜ断られたか」を徹底的に書き出し、改善を繰り返す。</p>' +
             '</div>' +
           '</div>' +
@@ -588,19 +588,7 @@
       return card + (isRec ? renderNogakiCaseStudy() : '');
     }).join('');
 
-    const handover = result.consultantHandover || {};
-    const handoverHtml = (
-      '<div class="handover-section">' +
-        '<h3 class="handover-title">📋 コンサルタント引き継ぎサマリー</h3>' +
-        '<div class="handover-summary">' + escapeHtml(handover.summary || '') + '</div>' +
-        '<div class="handover-grid">' +
-          '<div class="handover-item"><span class="footer-label">深掘りすべき問い</span>' + escapeHtml(handover.keyQuestion || '') + '</div>' +
-          '<div class="handover-item"><span class="footer-label">注意ポイント</span>' + escapeHtml(handover.watchOut || '') + '</div>' +
-        '</div>' +
-      '</div>'
-    );
-
-    container.innerHTML = optionsHtml + handoverHtml;
+    container.innerHTML = optionsHtml;
   }
 
   async function runAgentAnalysis() {
