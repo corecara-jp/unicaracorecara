@@ -234,7 +234,7 @@ Deno.serve(async (req: Request) => {
       body: JSON.stringify({
         model: 'llama-3.3-70b-versatile',
         temperature: 0.7,
-        max_tokens: 1500,
+        max_tokens: agentType === 'synthesizer' ? 4000 : 1500,
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: `以下のユーザーデータを分析してください:\n\n${JSON.stringify(userInput, null, 2)}` }
