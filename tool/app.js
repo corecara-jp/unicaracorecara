@@ -3,7 +3,7 @@
 
   // ─── Supabase 設定 ────────────────────────────────────────────────────────
   const SUPABASE_URL = 'https://xtcopreojvmovdswhhgk.supabase.co';
-  const SUPABASE_KEY = 'sb_publishable_S2XXYnqCuiEkrGAD9_yHYQ_hMjh1JWe';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0Y29wcmVvanZtb3Zkc3doaGdrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3MjkzMjQsImV4cCI6MjA4OTMwNTMyNH0.l_ylqxCQ9LJDdPEBd_pbzjzk4N9v6hovqP2MOn1cGMQ';
   let db;
   if (window.supabase) {
     db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
