@@ -438,8 +438,8 @@
       const a1 = topAreas[0] || '';
       const a2 = topAreas[1] || '';
       const empathy = a1 && a2
-        ? 'あなたは今、' + a1 + ' と ' + a2 + ' を最優先に変えたいと感じています。その判断は正しい。'
-        : a1 ? 'あなたは今、' + a1 + ' を最優先に変えたいと感じています。その判断は正しい。' : '';
+        ? 'あなたは今、' + a1 + ' と ' + a2 + ' を最優先に変えたいと感じています。'
+        : a1 ? 'あなたは今、' + a1 + ' を最優先に変えたいと感じています。' : '';
       const areaLabels = topAreas.map(function (a, i) { return (i + 1) + '位：' + a; }).join('　');
       bridgeEl.innerHTML =
         (empathy ? '<strong class="empathy-line">' + escapeHtml(empathy) + '</strong><br>' : '') +
