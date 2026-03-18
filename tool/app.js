@@ -433,7 +433,7 @@
 
     const topAreas = state.priorityOrder.slice(0, 3);
 
-    // 共感の一文（優先度1）
+    // 共感の一文（優先度1）- AI分析中も表示
     if (bridgeEl) {
       const a1 = topAreas[0] || '';
       const a2 = topAreas[1] || '';
@@ -443,58 +443,133 @@
       const areaLabels = topAreas.map(function (a, i) { return (i + 1) + '位：' + a; }).join('　');
       bridgeEl.innerHTML =
         (empathy ? '<strong class="empathy-line">' + escapeHtml(empathy) + '</strong><br>' : '') +
-        '<span class="priority-line">' + escapeHtml(areaLabels) + ' を優先改善する想定で、4つの選択肢を提示します。</span>';
+        '<span class="priority-line">' + escapeHtml(areaLabels) + ' を優先改善する想定で分析します。</span>';
     }
 
-    container.innerHTML = OPTIONS.map(function (opt) {
-      const meta = OPTION_META[opt.id];
-      const rationale = buildRationale(opt.id, topAreas);
+    runAgentAnalysis();
+  }
+
+  // ─── Step 4: AIエージェント分析 ───────────────────────────────────────
+
+  function renderAgentLoading() {
+    const container = getEl('option-cards');
+    if (!container) return;
+    container.innerHTML = (
+      '<div class="agent-loading">' +
+        '<div class="agent-loading-title">4人のエージェントが並列分析中…</div>' +
+        '<div class="agent-progress-list">' +
+          '<div class="agent-progress-item" id="progress-career-strategist">' +
+            '<span class="agent-icon">💼</span><span class="agent-name">キャリア戦略家</span>' +
+            '<span class="agent-status loading">分析中…</span>' +
+          '</div>' +
+          '<div class="agent-progress-item" id="progress-life-planner">' +
+            '<span class="agent-icon">🏠</span><span class="agent-name">ライフ設計士</span>' +
+            '<span class="agent-status loading">分析中…</span>' +
+          '</div>' +
+          '<div class="agent-progress-item" id="progress-income-analyst">' +
+            '<span class="agent-icon">💰</span><span class="agent-name">収入アナリスト</span>' +
+            '<span class="agent-status loading">分析中…</span>' +
+          '</div>' +
+          '<div class="agent-progress-item" id="progress-psychology-coach">' +
+            '<span class="agent-icon">🧠</span><span class="agent-name">心理・動機分析官</span>' +
+            '<span class="agent-status loading">分析中…</span>' +
+          '</div>' +
+        '</div>' +
+        '<div class="agent-synthesizing" id="agent-synthesizing" hidden>' +
+          '<span class="synthesizing-dot"></span>シニアコンサルタントが統合分析中…' +
+        '</div>' +
+      '</div>'
+    );
+  }
+
+  function updateAgentProgress(agentType, success) {
+    const el = getEl('progress-' + agentType);
+    if (!el) return;
+    const status = el.querySelector('.agent-status');
+    if (status) {
+      status.textContent = success ? '完了 ✓' : 'エラー';
+      status.className = 'agent-status ' + (success ? 'done' : 'error');
+    }
+  }
+
+  function renderAgentResults(result) {
+    const container = getEl('option-cards');
+    if (!container || !result) return;
+
+    const optionsHtml = (result.options || []).map(function (opt) {
       const isRec = opt.recommended;
-
-      const rationaleHtml = rationale.map(function (item) {
-        return (
-          '<div class="rationale-item">' +
-            '<span class="rationale-area-tag">' + escapeHtml(item.area) + '</span>' +
-            '<p>' + escapeHtml(item.text) + '</p>' +
-          '</div>'
-        );
-      }).join('');
-
+      const rationaleHtml = (
+        '<div class="agent-rationale-grid">' +
+          '<div class="rationale-agent-item"><span class="agent-tag career">💼 キャリア戦略家</span><p>' + escapeHtml(opt.rationale.career || '') + '</p></div>' +
+          '<div class="rationale-agent-item"><span class="agent-tag life">🏠 ライフ設計士</span><p>' + escapeHtml(opt.rationale.life || '') + '</p></div>' +
+          '<div class="rationale-agent-item"><span class="agent-tag income">💰 収入アナリスト</span><p>' + escapeHtml(opt.rationale.income || '') + '</p></div>' +
+          '<div class="rationale-agent-item"><span class="agent-tag psych">🧠 心理分析官</span><p>' + escapeHtml(opt.rationale.psychology || '') + '</p></div>' +
+        '</div>'
+      );
       return (
         '<div class="option-card' + (isRec ? ' option-card-recommended' : '') + '">' +
           (isRec ? '<div class="recommended-badge">推奨</div>' : '') +
-          '<h3 class="option-card-title">' + escapeHtml(opt.name) + '</h3>' +
-          '<div class="option-card-meta">' +
-            '<dl class="meta-dl">' +
-              '<div><dt>次のステップ</dt><dd>' + escapeHtml(meta.next) + '</dd></div>' +
-              '<div><dt>効果の目安</dt><dd>' + escapeHtml(meta.time) + '</dd></div>' +
-              '<div><dt>リスク・負荷</dt><dd>' + escapeHtml(meta.risk) + '</dd></div>' +
-            '</dl>' +
-          '</div>' +
+          '<h3 class="option-card-title">' + escapeHtml(opt.title || opt.type) + '</h3>' +
+          '<p class="option-summary">' + escapeHtml(opt.summary || '') + '</p>' +
           '<div class="option-card-rationale">' +
-            '<div class="option-card-rationale-title">あなたの状況への根拠</div>' +
+            '<div class="option-card-rationale-title">4人のエージェントからの根拠</div>' +
             rationaleHtml +
+          '</div>' +
+          '<div class="option-footer">' +
+            '<div class="option-next-action"><span class="footer-label">今すぐできる一歩</span>' + escapeHtml(opt.nextAction || '') + '</div>' +
+            '<div class="option-risk"><span class="footer-label">リスク</span>' + escapeHtml(opt.risk || '') + '</div>' +
           '</div>' +
         '</div>'
       );
     }).join('');
+
+    const handover = result.consultantHandover || {};
+    const handoverHtml = (
+      '<div class="handover-section">' +
+        '<h3 class="handover-title">📋 コンサルタント引き継ぎサマリー</h3>' +
+        '<div class="handover-summary">' + escapeHtml(handover.summary || '') + '</div>' +
+        '<div class="handover-grid">' +
+          '<div class="handover-item"><span class="footer-label">深掘りすべき問い</span>' + escapeHtml(handover.keyQuestion || '') + '</div>' +
+          '<div class="handover-item"><span class="footer-label">注意ポイント</span>' + escapeHtml(handover.watchOut || '') + '</div>' +
+        '</div>' +
+      '</div>'
+    );
+
+    container.innerHTML = optionsHtml + handoverHtml;
   }
 
-  function buildRationale(optionId, topAreas) {
-    const items = [];
-    topAreas.forEach(function (area) {
-      const imp = state.improvements[area] || '';
-      const areaTexts = AREA_OPTION_TEXTS[area];
-      if (areaTexts && areaTexts[optionId]) {
-        items.push({ area: area, text: areaTexts[optionId](imp) });
-      } else {
-        items.push({ area: area, text: '理想と現実の差を埋める選択肢として検討できます。' });
-      }
-    });
-    if (items.length === 0) {
-      items.push({ area: '全体', text: '理想と現実の差を埋める一つの道として、この選択肢を検討できます。' });
+  async function runAgentAnalysis() {
+    if (!window.CareerAgents) {
+      const container = getEl('option-cards');
+      if (container) container.innerHTML = '<p class="agent-error">エージェントの読み込みに失敗しました。ページを再読み込みしてください。</p>';
+      return;
     }
-    return items;
+
+    renderAgentLoading();
+
+    try {
+      const result = await window.CareerAgents.orchestrate(state, {
+        onAgentDone: function (agentType, res) {
+          updateAgentProgress(agentType, res !== null);
+          const allDone = ['career-strategist', 'life-planner', 'income-analyst', 'psychology-coach']
+            .every(function (t) {
+              const el = getEl('progress-' + t);
+              const s = el && el.querySelector('.agent-status');
+              return s && (s.classList.contains('done') || s.classList.contains('error'));
+            });
+          if (allDone) {
+            const synthEl = getEl('agent-synthesizing');
+            if (synthEl) synthEl.hidden = false;
+          }
+        }
+      });
+      renderAgentResults(result);
+    } catch (err) {
+      const container = getEl('option-cards');
+      if (container) {
+        container.innerHTML = '<div class="agent-error">分析中にエラーが発生しました。<br><small>' + escapeHtml(err.message) + '</small></div>';
+      }
+    }
   }
 
   // ─── 履歴レンダリング ──────────────────────────────────────────────────
