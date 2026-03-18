@@ -58,7 +58,8 @@ body {
   font-size: 0.875rem;
   color: var(--color-text-muted);
   margin: -24px 0 0 0;
-  font-family: 'M PLUS Rounded 1c', var(--font-sans);
+  font-family: 'Zen Maru Gothic', 'M PLUS Rounded 1c', var(--font-sans);
+  font-weight: 700;
 }
 
 /* ─── Step indicator ──────────────────────────────────────────────── */
