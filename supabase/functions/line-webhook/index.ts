@@ -1,6 +1,10 @@
 // LINE Messaging API webhook handler
 // 診断結果メッセージを受信して、フォーマットされた結果を返信する
 
+const SUPABASE_URL = 'https://xtcopreojvmovdswhhgk.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0Y29wcmVvanZtb3Zkc3doaGdrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3MjkzMjQsImV4cCI6MjA4OTMwNTMyNH0.l_ylqxCQ9LJDdPEBd_pbzjzk4N9v6hovqP2MOn1cGMQ';
+const SHINDAN_URL = 'https://xtcopreojvmovdswhhgk.supabase.co/functions/v1/shindan';
+
 const TYPES: Record<string, { name: string; emoji: string; desc: string; story: { lead: string; timeline: Array<{ phase: string; body: string }> } }> = {
   earner: {
     name: '稼ぎ方を変えたいタイプ',
@@ -109,6 +113,35 @@ ${storyLines}
 https://lin.ee/TZLZX4P`;
 }
 
+async function lookupToken(token: string): Promise<string | null> {
+  const res = await fetch(
+    SUPABASE_URL + '/rest/v1/shindan_tokens?token=eq.' + encodeURIComponent(token) + '&select=type_id&limit=1',
+    {
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+      },
+    }
+  );
+  if (!res.ok) return null;
+  const data = await res.json();
+  return data?.[0]?.type_id ?? null;
+}
+
+async function sendReply(replyToken: string, text: string, accessToken: string): Promise<void> {
+  await fetch('https://api.line.me/v2/bot/message/reply', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({
+      replyToken,
+      messages: [{ type: 'text', text }],
+    }),
+  });
+}
+
 async function verifySignature(body: string, signature: string, secret: string): Promise<boolean> {
   const encoder = new TextEncoder();
   const key = await crypto.subtle.importKey(
@@ -158,31 +191,40 @@ Deno.serve(async (req: Request) => {
   }
 
   for (const event of body.events || []) {
+    // 友達追加イベント
+    if (event.type === 'follow') {
+      await sendReply(
+        event.replyToken,
+        'ともだち追加ありがとうございます！🎉\n\n診断を受けた方は、診断ページに戻って「LINEで結果を受け取る」ボタンを押してください。\n\nまだの方はこちらから無料で診断できます👇\n' + SHINDAN_URL,
+        channelAccessToken,
+      );
+      continue;
+    }
+
     // メッセージイベントのみ処理
     if (event.type !== 'message' || event.message?.type !== 'text') continue;
 
     const text: string = event.message.text.trim();
     const replyToken: string = event.replyToken;
 
-    // 診断結果メッセージのパース: "診断:typeId:scores"
+    // 新形式: SHINDAN-XXXXXX トークン
+    const tokenMatch = text.match(/^SHINDAN-([A-Z0-9]{6})$/i);
+    if (tokenMatch) {
+      const token = tokenMatch[1].toUpperCase();
+      const typeId = await lookupToken(token);
+      if (typeId) {
+        await sendReply(replyToken, buildReplyMessage(typeId), channelAccessToken);
+      } else {
+        await sendReply(replyToken, '診断結果が見つかりませんでした。もう一度診断ページからお試しください。\n' + SHINDAN_URL, channelAccessToken);
+      }
+      continue;
+    }
+
+    // 旧形式: 診断:typeId:scores（後方互換）
     const match = text.match(/^診断:([a-z]+):[\d-]+$/);
-    if (!match) continue;
-
-    const typeId = match[1];
-    const replyText = buildReplyMessage(typeId);
-
-    // LINE Messaging API で返信
-    await fetch('https://api.line.me/v2/bot/message/reply', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${channelAccessToken}`,
-      },
-      body: JSON.stringify({
-        replyToken,
-        messages: [{ type: 'text', text: replyText }],
-      }),
-    });
+    if (match) {
+      await sendReply(replyToken, buildReplyMessage(match[1]), channelAccessToken);
+    }
   }
 
   return new Response('OK', { status: 200 });
