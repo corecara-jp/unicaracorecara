@@ -1,0 +1,1263 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>これから。｜変えたい領域 診断</title>
+  <meta name="description" content="あなたが「変えたい」のはどの領域？3分・7問で、キャリアのモヤモヤの正体を整理します。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700&family=Zen+Maru+Gothic:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    /* ===== 診断ツール専用スタイル ===== */
+
+    /* 1. 画面切り替え */
+    .shindan-screen { display: none; }
+    .shindan-screen.active { display: block; }
+
+    /* 2. ヘッダー */
+    .shindan-header {
+      text-align: center;
+      padding: 20px 0 28px;
+    }
+    .shindan-header .logo-img {
+      height: 80px;
+      width: auto;
+      display: block;
+      margin: 0 auto;
+    }
+    .shindan-header .tagline {
+      font-size: 0.8125rem;
+      color: var(--color-text-muted);
+      margin: -16px 0 0;
+      font-family: 'Zen Maru Gothic', 'M PLUS Rounded 1c', var(--font-sans);
+      font-weight: 700;
+    }
+
+    /* 3. プログレスバー */
+    .progress-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .progress-track {
+      flex: 1;
+      height: 6px;
+      background: var(--color-border);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: var(--color-primary);
+      border-radius: 3px;
+      transition: width 0.35s ease;
+    }
+    .progress-text {
+      font-size: 0.8125rem;
+      color: var(--color-text-muted);
+      white-space: nowrap;
+      min-width: 2.8rem;
+      text-align: right;
+    }
+
+    /* 4. 質問カード・選択肢 */
+    .question-card {
+      background: var(--color-surface);
+      border-radius: var(--radius);
+      padding: 28px 24px;
+      box-shadow: var(--shadow);
+      margin-bottom: 16px;
+    }
+    .q-domain-tag {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--color-accent);
+      background: rgba(196,163,90,0.12);
+      padding: 2px 10px;
+      border-radius: 10px;
+      margin-bottom: 10px;
+    }
+    .q-number {
+      font-size: 0.8125rem;
+      font-weight: 700;
+      color: var(--color-text-muted);
+      margin: 0 0 6px;
+    }
+    .q-text {
+      font-size: 1.0625rem;
+      font-weight: 700;
+      color: var(--color-text);
+      margin: 0 0 24px;
+      line-height: 1.65;
+    }
+    .choices-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .choice-btn {
+      width: 100%;
+      text-align: left;
+      padding: 13px 16px;
+      background: var(--color-surface);
+      border: 1.5px solid var(--color-border);
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.9375rem;
+      line-height: 1.55;
+      color: var(--color-text);
+      transition: border-color 0.15s, background 0.15s, transform 0.1s;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    .choice-btn:hover {
+      border-color: var(--color-primary);
+      background: rgba(44,95,79,0.04);
+    }
+    .choice-btn:active { transform: scale(0.98); }
+    .choice-btn.selected {
+      border-color: var(--color-primary);
+      background: rgba(44,95,79,0.09);
+      font-weight: 600;
+      color: var(--color-primary);
+    }
+    .choice-btn.selected .choice-label { color: var(--color-primary); }
+    .choice-label {
+      font-weight: 700;
+      color: var(--color-accent);
+      flex-shrink: 0;
+      width: 20px;
+    }
+    .choice-text { flex: 1; }
+    .question-nav {
+      display: flex;
+      justify-content: flex-start;
+    }
+
+    /* 5. 入口画面 */
+    .intro-card {
+      background: var(--color-surface);
+      border-radius: var(--radius);
+      padding: 32px 24px 28px;
+      box-shadow: var(--shadow);
+      text-align: center;
+    }
+    .intro-eyebrow {
+      font-size: 0.8125rem;
+      color: var(--color-accent);
+      font-weight: 700;
+      margin: 0 0 10px;
+      letter-spacing: 0.05em;
+    }
+    .intro-headline {
+      font-size: 1.375rem;
+      font-weight: 700;
+      color: var(--color-primary);
+      margin: 0 0 16px;
+      line-height: 1.5;
+      font-family: 'Zen Maru Gothic', var(--font-sans);
+    }
+    .intro-subtext {
+      font-size: 0.9375rem;
+      color: var(--color-text-muted);
+      margin: 0 0 28px;
+      line-height: 1.8;
+    }
+    .btn-full { width: 100%; }
+    .intro-note {
+      font-size: 0.8125rem;
+      color: var(--color-text-muted);
+      margin: 14px 0 0;
+    }
+    .intro-features {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      margin: 0 0 24px;
+      flex-wrap: wrap;
+    }
+    .intro-feature-item {
+      font-size: 0.8125rem;
+      color: var(--color-text-muted);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .intro-feature-item::before {
+      content: '✓';
+      color: var(--color-primary);
+      font-weight: 700;
+    }
+
+    /* 6. 結果タイプカード */
+    .result-type-card {
+      background: linear-gradient(135deg, #1a3d31 0%, #2c5f4f 100%);
+      border-radius: var(--radius);
+      padding: 28px 24px;
+      color: #fff;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 20px rgba(44,95,79,0.3);
+    }
+    .result-eyebrow {
+      font-size: 0.8125rem;
+      color: rgba(255,255,255,0.6);
+      margin: 0 0 6px;
+    }
+    .result-type-name {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--color-accent);
+      margin: 0 0 14px;
+      font-family: 'Zen Maru Gothic', var(--font-sans);
+      line-height: 1.35;
+    }
+    .result-type-desc {
+      font-size: 0.9375rem;
+      color: rgba(255,255,255,0.88);
+      line-height: 1.75;
+      margin: 0 0 18px;
+    }
+    .result-domains {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+    .domain-badge {
+      padding: 4px 14px;
+      background: rgba(196,163,90,0.18);
+      border: 1px solid var(--color-accent);
+      border-radius: 20px;
+      font-size: 0.8125rem;
+      font-weight: 700;
+      color: var(--color-accent);
+    }
+    .result-tagline {
+      font-size: 0.875rem;
+      color: rgba(255,255,255,0.5);
+      margin: 0;
+      padding-top: 14px;
+      border-top: 1px solid rgba(255,255,255,0.15);
+    }
+
+    /* 7. 領域スコアバー */
+    .result-domains-detail {
+      background: var(--color-surface);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      box-shadow: var(--shadow);
+      margin-bottom: 20px;
+    }
+    .result-domains-detail h3 {
+      font-size: 0.9375rem;
+      font-weight: 700;
+      color: var(--color-primary);
+      margin: 0 0 16px;
+    }
+    .domain-bars-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .domain-bar-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .domain-name {
+      width: 76px;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--color-text);
+      flex-shrink: 0;
+    }
+    .domain-bar-track {
+      flex: 1;
+      height: 8px;
+      background: var(--color-border);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .domain-bar-fill {
+      height: 100%;
+      background: var(--color-primary);
+      border-radius: 4px;
+      width: 0;
+      transition: width 0.7s ease;
+    }
+    .domain-bar-fill.top { background: var(--color-accent); }
+    .domain-score {
+      font-size: 0.8125rem;
+      font-weight: 700;
+      color: var(--color-text-muted);
+      width: 28px;
+      text-align: right;
+      flex-shrink: 0;
+    }
+    .domain-score.top { color: var(--color-accent); }
+
+    /* 8. シェア・CTA */
+    .result-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .btn-share {
+      background: linear-gradient(90deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
+      color: #fff;
+      border: none;
+      width: 100%;
+      text-align: center;
+      padding: 14px;
+      border-radius: var(--radius);
+      font-weight: 700;
+      font-size: 0.9375rem;
+      cursor: pointer;
+      font-family: inherit;
+      transition: opacity 0.2s;
+    }
+    .btn-share:hover { opacity: 0.9; }
+    .btn-line {
+      background: #06C755;
+      color: #fff;
+      border: none;
+      width: 100%;
+      text-align: center;
+      padding: 14px;
+      border-radius: var(--radius);
+      font-weight: 700;
+      font-size: 0.9375rem;
+      cursor: pointer;
+      font-family: inherit;
+      text-decoration: none;
+      display: block;
+      box-sizing: border-box;
+      transition: background 0.2s;
+    }
+    .btn-line:hover { background: #05a847; }
+
+    .share-hint {
+      font-size: 0.8125rem;
+      color: var(--color-text-muted);
+      text-align: center;
+      margin: 4px 0 0;
+    }
+
+    .result-restart {
+      text-align: center;
+      margin-top: 8px;
+    }
+
+    /* 9. Canvas（非表示） */
+    #share-canvas { display: none; }
+
+    /* 10. LINEゲート画面 */
+    .gate-type-card {
+      background: linear-gradient(135deg, #1a3d31 0%, #2c5f4f 100%);
+      border-radius: var(--radius);
+      padding: 28px 24px;
+      color: #fff;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 20px rgba(44,95,79,0.3);
+      text-align: center;
+    }
+    .gate-type-eyebrow {
+      font-size: 0.8125rem;
+      color: rgba(255,255,255,0.6);
+      margin: 0 0 8px;
+    }
+    .gate-type-name {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--color-accent);
+      margin: 0 0 16px;
+      font-family: 'Zen Maru Gothic', var(--font-sans);
+    }
+    .gate-blur-area {
+      position: relative;
+      margin-bottom: 0;
+    }
+    .gate-blur-content {
+      filter: blur(6px);
+      user-select: none;
+      pointer-events: none;
+    }
+    .gate-blur-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, rgba(44,95,79,0.1) 0%, rgba(26,61,49,0.85) 100%);
+      border-radius: var(--radius);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      padding-bottom: 8px;
+    }
+    .gate-lock-icon {
+      font-size: 2rem;
+      margin-bottom: 8px;
+    }
+    .gate-lock-text {
+      font-size: 0.875rem;
+      color: rgba(255,255,255,0.85);
+      text-align: center;
+      line-height: 1.5;
+    }
+    .gate-cta-card {
+      background: var(--color-surface);
+      border-radius: var(--radius);
+      padding: 24px;
+      box-shadow: var(--shadow);
+      text-align: center;
+      margin-bottom: 16px;
+    }
+    .gate-cta-eyebrow {
+      font-size: 0.8125rem;
+      color: var(--color-accent);
+      font-weight: 700;
+      margin: 0 0 10px;
+    }
+    .gate-cta-title {
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: var(--color-primary);
+      margin: 0 0 8px;
+      line-height: 1.45;
+      font-family: 'Zen Maru Gothic', var(--font-sans);
+    }
+    .gate-cta-desc {
+      font-size: 0.875rem;
+      color: var(--color-text-muted);
+      margin: 0 0 20px;
+      line-height: 1.7;
+    }
+    .gate-benefits {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 20px;
+      text-align: left;
+    }
+    .gate-benefit-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 0.875rem;
+      color: var(--color-text);
+    }
+    .gate-benefit-icon {
+      color: var(--color-primary);
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .gate-note {
+      font-size: 0.75rem;
+      color: var(--color-text-muted);
+      margin: 12px 0 0;
+    }
+
+    /* 10. レスポンシブ */
+    @media (max-width: 480px) {
+      .question-card { padding: 22px 18px; }
+      .intro-card { padding: 24px 18px 20px; }
+      .result-type-card { padding: 22px 18px; }
+      .result-domains-detail { padding: 18px; }
+      .q-text { font-size: 1rem; }
+      .intro-headline { font-size: 1.25rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <!-- ===== 入口画面 ===== -->
+    <section id="screen-intro" class="shindan-screen active">
+      <header class="shindan-header">
+        <h1 class="logo">
+          <img src="logo.png" alt="これから。" class="logo-img">
+        </h1>
+        <p class="tagline">「このままでいいのか。」を最初に相談する場所</p>
+      </header>
+
+      <div class="intro-card">
+        <p class="intro-eyebrow">3分でわかる・無料診断</p>
+        <h2 class="intro-headline">あなたが「変えたい」のは、<br>どの領域ですか？</h2>
+        <p class="intro-subtext">
+          「なんとなくモヤモヤしているけど、何を変えればいいかわからない」<br>
+          そんなあなたへ。7問でキャリアのモヤモヤの正体を整理します。
+        </p>
+        <div class="intro-features">
+          <span class="intro-feature-item">7問・約3分</span>
+          <span class="intro-feature-item">職種断定なし</span>
+          <span class="intro-feature-item">LINE登録で全結果受取</span>
+        </div>
+        <button type="button" id="btn-start" class="btn btn-primary btn-full">診断スタート →</button>
+        <p class="intro-note">「転職すべき」という答えを出すものではありません。<br>あなたの「変えたい領域」を整理するためのツールです。</p>
+      </div>
+    </section>
+
+    <!-- ===== 質問画面 ===== -->
+    <section id="screen-question" class="shindan-screen">
+      <header class="shindan-header">
+        <img src="logo.png" alt="これから。" class="logo-img">
+      </header>
+
+      <div class="progress-wrap">
+        <div class="progress-track">
+          <div id="progress-fill" class="progress-fill" style="width: 0%"></div>
+        </div>
+        <span id="progress-text" class="progress-text">1 / 7</span>
+      </div>
+
+      <div class="question-card">
+        <p id="q-number" class="q-number">Q1</p>
+        <p id="q-text" class="q-text"></p>
+        <div id="choices-list" class="choices-list"></div>
+      </div>
+
+      <div class="question-nav">
+        <button type="button" id="btn-prev" class="btn btn-secondary">← 前の質問</button>
+      </div>
+    </section>
+
+    <!-- ===== LINEゲート画面 ===== -->
+    <section id="screen-gate" class="shindan-screen">
+      <header class="shindan-header">
+        <img src="logo.png" alt="これから。" class="logo-img">
+      </header>
+
+      <!-- タイプ名（見せる） -->
+      <div class="gate-type-card">
+        <p class="gate-type-eyebrow">診断完了！あなたのタイプは</p>
+        <h2 id="gate-type-name" class="gate-type-name"></h2>
+        <div id="gate-domains" class="result-domains" style="justify-content:center;"></div>
+      </div>
+
+      <!-- ぼかしエリア -->
+      <div class="gate-blur-area" style="margin-bottom:20px;">
+        <div class="gate-blur-content">
+          <div style="background:#fff;border-radius:8px;padding:20px 24px;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+            <p style="font-weight:700;color:#2c5f4f;margin:0 0 14px;">あなたが変えたい領域（スコア）</p>
+            <div style="display:flex;flex-direction:column;gap:10px;">
+              <div style="display:flex;align-items:center;gap:10px;"><span style="width:76px;font-size:0.8125rem;">収入</span><div style="flex:1;height:8px;background:#e5e2de;border-radius:4px;"><div style="width:85%;height:100%;background:#c4a35a;border-radius:4px;"></div></div><span style="font-size:0.8125rem;font-weight:700;color:#c4a35a;width:28px;">●●</span></div>
+              <div style="display:flex;align-items:center;gap:10px;"><span style="width:76px;font-size:0.8125rem;">仕事内容</span><div style="flex:1;height:8px;background:#e5e2de;border-radius:4px;"><div style="width:65%;height:100%;background:#2c5f4f;border-radius:4px;"></div></div><span style="font-size:0.8125rem;font-weight:700;color:#666;width:28px;">●●</span></div>
+              <div style="display:flex;align-items:center;gap:10px;"><span style="width:76px;font-size:0.8125rem;">働き方</span><div style="flex:1;height:8px;background:#e5e2de;border-radius:4px;"><div style="width:45%;height:100%;background:#2c5f4f;border-radius:4px;"></div></div><span style="font-size:0.8125rem;font-weight:700;color:#666;width:28px;">●●</span></div>
+              <div style="display:flex;align-items:center;gap:10px;"><span style="width:76px;font-size:0.8125rem;">職場環境</span><div style="flex:1;height:8px;background:#e5e2de;border-radius:4px;"><div style="width:30%;height:100%;background:#2c5f4f;border-radius:4px;"></div></div><span style="font-size:0.8125rem;font-weight:700;color:#666;width:28px;">●●</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="gate-blur-overlay">
+          <p class="gate-lock-icon">🔒</p>
+          <p class="gate-lock-text">詳細スコアと分析結果は<br>LINE登録で受け取れます</p>
+        </div>
+      </div>
+
+      <!-- LINE登録CTA -->
+      <div class="gate-cta-card">
+        <p class="gate-cta-eyebrow">🎁 LINE登録で無料プレゼント</p>
+        <h3 class="gate-cta-title">あなたの診断結果レポートを<br>LINEで今すぐ受け取る</h3>
+        <p class="gate-cta-desc">登録後すぐにタイプ別の詳細レポートをお届けします。</p>
+        <div class="gate-benefits">
+          <div class="gate-benefit-item">
+            <span class="gate-benefit-icon">✓</span>
+            <span>6領域の詳細スコアと分析</span>
+          </div>
+          <div class="gate-benefit-item">
+            <span class="gate-benefit-icon">✓</span>
+            <span>あなたのタイプに合った「次の一手」</span>
+          </div>
+          <div class="gate-benefit-item">
+            <span class="gate-benefit-icon">✓</span>
+            <span>同じタイプの人が変わった事例</span>
+          </div>
+          <div class="gate-benefit-item">
+            <span class="gate-benefit-icon">✓</span>
+            <span>無料面談の優先予約</span>
+          </div>
+        </div>
+        <button type="button" id="btn-line-gate" class="btn-line" onclick="onLineRegister()">📩 LINEで結果を受け取る（無料）</button>
+        <p class="gate-note">※ LINEのトーク画面で「送信」を押すと、診断結果が届きます</p>
+      </div>
+
+      <div class="result-restart" style="margin-bottom:32px;">
+        <button type="button" id="btn-restart-gate" class="btn btn-secondary">もう一度診断する</button>
+      </div>
+    </section>
+
+    <!-- ===== 結果画面 ===== -->
+    <section id="screen-result" class="shindan-screen">
+      <header class="shindan-header">
+        <img src="logo.png" alt="これから。" class="logo-img">
+      </header>
+
+      <!-- タイプカード -->
+      <div class="result-type-card" id="share-target">
+        <p class="result-eyebrow">あなたのタイプは</p>
+        <h2 id="result-type-name" class="result-type-name"></h2>
+        <p id="result-type-desc" class="result-type-desc"></p>
+        <div id="result-domains" class="result-domains"></div>
+        <p class="result-tagline">「これから。」で一緒に整理しましょう</p>
+      </div>
+
+      <!-- 領域スコアバー -->
+      <div class="result-domains-detail">
+        <h3>あなたが変えたい領域（スコア）</h3>
+        <div id="domain-bars-list" class="domain-bars-list"></div>
+      </div>
+
+      <!-- 同タイプのストーリー -->
+      <div id="story-card" class="case-study-card"></div>
+
+      <!-- URLコピー -->
+      <div id="result-url-box" style="background:#fff;border:1px dashed #2c5f4f;border-radius:8px;padding:16px 20px;margin-bottom:16px;display:none;">
+        <p style="font-size:0.8125rem;font-weight:700;color:#2c5f4f;margin:0 0 8px;">🔗 この結果ページのURL（LINEに送ってください）</p>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input id="result-url-input" type="text" readonly style="flex:1;padding:8px 10px;border:1px solid #e5e2de;border-radius:6px;font-size:0.8125rem;color:#333;background:#faf9f7;">
+          <button type="button" id="btn-copy-url" style="padding:8px 14px;background:#2c5f4f;color:#fff;border:none;border-radius:6px;font-size:0.8125rem;font-weight:700;cursor:pointer;white-space:nowrap;">コピー</button>
+        </div>
+        <p id="copy-status" style="font-size:0.75rem;color:#2c5f4f;margin:6px 0 0;min-height:1em;"></p>
+      </div>
+
+      <!-- シェア・CTA -->
+      <div class="result-actions">
+        <button type="button" id="btn-share" class="btn-share">📸 画像を保存してインスタでシェア</button>
+        <p class="share-hint">保存後、インスタのストーリーに貼り付けてください</p>
+        <button type="button" id="btn-line-send" class="btn-line">📩 この結果をLINEに送って面談予約する →</button>
+      </div>
+
+      <div class="result-restart">
+        <button type="button" id="btn-restart" class="btn btn-secondary">もう一度診断する</button>
+      </div>
+    </section>
+
+  </div>
+
+  <canvas id="share-canvas"></canvas>
+
+  <script>
+    /* ===================================================
+       データ定義
+    =================================================== */
+    const DOMAIN_KEYS  = ['income', 'work', 'style', 'env', 'skill', 'life'];
+    const DOMAIN_NAMES = { income:'収入', work:'仕事内容', style:'働き方', env:'職場環境', skill:'スキル', life:'生活' };
+
+    const QUESTIONS = [
+      {
+        text: '今の収入について、正直どう感じていますか？',
+        choices: [
+          { text: '生活はできるが、もっと稼ぎたい気持ちが強い',         score: { income:3 } },
+          { text: '頑張りが給料に反映されていない気がする',               score: { income:3, work:1 } },
+          { text: '今の収入には満足しているが、将来が不安',               score: { income:1, life:2 } },
+          { text: '収入よりも仕事の内容や環境の方が気になる',             score: { work:2, env:1 } },
+        ]
+      },
+      {
+        text: '仕事中、一番「消耗する」と感じる瞬間は？',
+        choices: [
+          { text: '自分が得意なことと違うことをやらされるとき',           score: { skill:2, work:1 } },
+          { text: '頑張っても結果が見えない・評価されないとき',           score: { income:1, work:2 } },
+          { text: '人間関係のストレスが積み重なるとき',                   score: { env:3 } },
+          { text: 'なんとなく「この仕事、意味あるのかな」と思うとき',     score: { work:1, life:2 }, d: true },
+        ]
+      },
+      {
+        text: 'もし働き方を自由に変えられるとしたら、まず何を変えたい？',
+        choices: [
+          { text: '残業・拘束時間を減らしたい',                           score: { style:3 } },
+          { text: '場所にとらわれず働きたい（リモート・フレックス）',     score: { style:3 } },
+          { text: 'もっと自分のペースで進められる仕事がしたい',           score: { style:2, skill:1 } },
+          { text: '今の働き方には大きな不満はない',                       score: { work:1 }, d: true },
+        ]
+      },
+      {
+        text: '職場の「人」について、今どう感じていますか？',
+        choices: [
+          { text: 'チームや上司との関係が原因でモヤモヤしている',         score: { env:3 } },
+          { text: '評価の仕方や会社の方針に納得できない',                 score: { env:2, income:1 } },
+          { text: '職場の人は悪くないが、刺激がなくて物足りない',         score: { env:1, skill:2 } },
+          { text: '人間関係より、仕事の中身に問題を感じている',           score: { work:2, skill:1 }, d: true },
+        ]
+      },
+      {
+        text: '今の仕事で、自分の成長を感じますか？',
+        choices: [
+          { text: '同じことの繰り返しで、成長している気がしない',         score: { skill:3 } },
+          { text: '学びたいスキルと今の仕事がズレている',                 score: { skill:3 } },
+          { text: '成長はしているが、それが収入に繋がっていない',         score: { skill:2, income:1 } },
+          { text: '成長のことより、今すぐ環境を変えたい気持ちが強い',     score: { env:2, life:1 }, d: true },
+        ]
+      },
+      {
+        text: '仕事以外の時間について、今どう感じていますか？',
+        choices: [
+          { text: '仕事が忙しすぎて、プライベートの時間が足りない',       score: { life:3, style:1 } },
+          { text: '趣味や家族との時間を大切にしたいが、難しい',           score: { life:3 } },
+          { text: '生活リズムを整えたいが、仕事の都合で難しい',           score: { life:2, style:1 } },
+          { text: '仕事とプライベートのバランスより、やりがいが欲しい',   score: { work:2, skill:1 }, d: true },
+        ]
+      },
+      {
+        text: '今のモヤモヤに一番近いのはどれですか？',
+        choices: [
+          { text: 'お金や待遇を変えたい',                                 score: { income:2, work:1 } },
+          { text: '仕事の中身ややりがいを変えたい',                       score: { work:2, skill:1 } },
+          { text: '働く環境（場所・時間・人）を変えたい',                 score: { style:2, env:1, life:1 } },
+          { text: 'まず何を変えるべきかを整理したい',                     score: {}, d: true },
+        ]
+      },
+    ];
+
+    const TYPES = {
+      earner: {
+        name: '稼ぎ方を変えたいタイプ',
+        domains: ['収入', '仕事内容'],
+        desc: '今の仕事量や努力が、収入にきちんと反映されていないと感じています。やりがいと報酬を両立できる環境に移ることで、大きく変われる可能性があります。',
+        story: {
+          lead: '「頑張っても給料が上がらない」と感じていたAさん（28歳・メーカー営業）',
+          timeline: [
+            { phase: '相談前', body: '5年間同じ給与体系。頑張っても評価されない閉塞感があった。' },
+            { phase: '面談後',  body: '「仕事内容×収入」の不一致が明確に。インセンティブ型企業へ転職を検討開始。' },
+            { phase: '現在',    body: '月収1.3倍。「評価される実感」を初めて得られた。' },
+          ]
+        }
+      },
+      freedom: {
+        name: '自由を求めているタイプ',
+        domains: ['働き方', '生活'],
+        desc: '時間・場所・ペースへの制約が積み重なり、じわじわと消耗しています。働き方を変えることで、生活全体のクオリティが一気に上がる可能性があります。',
+        story: {
+          lead: '「出社＋残業」の毎日に疲弊していたBさん（31歳・事務）',
+          timeline: [
+            { phase: '相談前', body: '通勤往復2時間＋毎日残業。趣味も家族時間もなかった。' },
+            { phase: '面談後',  body: 'フルリモート可の職種に絞った転職活動を開始。' },
+            { phase: '現在',    body: '週3在宅。「平日の夜が自分のものになった」と話す。' },
+          ]
+        }
+      },
+      escape: {
+        name: '環境脱出タイプ',
+        domains: ['職場環境'],
+        desc: '人間関係・評価制度・会社の方針——何か一つではなく、「この職場全体」へのストレスが積み上がっています。環境を変えることで、本来の力を発揮できます。',
+        story: {
+          lead: '「上司が変わるたびに評価がリセットされる」と悩んでいたCさん（34歳・IT）',
+          timeline: [
+            { phase: '相談前', body: '職場の人間関係に消耗し、仕事自体が嫌になっていた。' },
+            { phase: '面談後',  body: '「環境」が問題と整理でき、スキルへの自信を取り戻せた。' },
+            { phase: '現在',    body: '転職後「こんなに仕事って楽しいんだ」と実感。' },
+          ]
+        }
+      },
+      growth: {
+        name: '成長渇望タイプ',
+        domains: ['スキル', '仕事内容'],
+        desc: '今の仕事では自分の可能性を使い切れていない感覚があります。学びたいスキルと実際の業務のズレを解消することが、最初の一歩になります。',
+        story: {
+          lead: '「同じことの繰り返しで、何も身についていない」と感じていたDさん（26歳・営業事務）',
+          timeline: [
+            { phase: '相談前', body: '日々の業務をこなすだけで、1年前と何も変わっていない気がした。' },
+            { phase: '面談後',  body: '「身につけたいスキル」を言語化し、職種転換の方向性が決まった。' },
+            { phase: '現在',    body: 'Webマーケ職へ転換。「毎日何かを学んでいる感覚がある」。' },
+          ]
+        }
+      },
+      balance: {
+        name: 'バランス回復タイプ',
+        domains: ['生活', '働き方'],
+        desc: 'やりがいを諦めたくはない。でも、今の自分の生活も守りたい。その両方を叶えるために、働く条件を整理することから始めましょう。',
+        story: {
+          lead: '「仕事は好きだが、このままでは倒れる」と話していたEさん（35歳・医療職）',
+          timeline: [
+            { phase: '相談前', body: '仕事内容は好きなのに、激務で体力・気力が限界だった。' },
+            { phase: '面談後',  body: '「仕事内容はそのままに、働く環境だけを変える」という軸が決まった。' },
+            { phase: '現在',    body: '同職種で残業の少ない職場へ。仕事へのモチベが戻った。' },
+          ]
+        }
+      },
+      organize: {
+        name: '整理が必要なタイプ',
+        domains: ['複数領域'],
+        desc: '何かが違うという感覚はあるのに、何を変えればいいのかがまだ見えていない状態です。まず「変えたいもの」を整理することが、最初の一手になります。',
+        story: {
+          lead: '「モヤモヤはあるが、転職すべきかもわからない」と来てくれたFさん（29歳・総合職）',
+          timeline: [
+            { phase: '相談前', body: '何となく不満はあるが、何を変えればいいか整理できていなかった。' },
+            { phase: '面談後',  body: '6領域で優先度を整理した結果、「まず職場環境を変える」という軸が決まった。' },
+            { phase: '現在',    body: '転職を検討中。「次に何をすべきか」が明確になった。' },
+          ]
+        }
+      },
+    };
+
+    const LINE_URL = 'https://lin.ee/TZLZX4P';
+    const LINE_BASIC_ID = '625xqfxu'; // LINE公式アカウントのBasic ID（@なし）
+
+    /* ===================================================
+       状態管理
+    =================================================== */
+    let state = {
+      currentQ: 0,
+      answers: [],  // インデックスで管理 [choiceIndex, ...]
+      scores: { income:0, work:0, style:0, env:0, skill:0, life:0 },
+      dCount: 0,
+      resultTypeId: null,
+    };
+
+    function resetState() {
+      state = {
+        currentQ: 0,
+        answers: [],
+        scores: { income:0, work:0, style:0, env:0, skill:0, life:0 },
+        dCount: 0,
+        resultTypeId: null,
+      };
+    }
+
+    /* ===================================================
+       画面制御
+    =================================================== */
+    function showScreen(id) {
+      document.querySelectorAll('.shindan-screen').forEach(s => s.classList.remove('active'));
+      document.getElementById('screen-' + id).classList.add('active');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    /* ===================================================
+       質問レンダリング
+    =================================================== */
+    function renderQuestion(index) {
+      const q = QUESTIONS[index];
+      state.currentQ = index;
+
+      // プログレス更新
+      const pct = Math.round((index / QUESTIONS.length) * 100);
+      document.getElementById('progress-fill').style.width = pct + '%';
+      document.getElementById('progress-text').textContent = (index + 1) + ' / ' + QUESTIONS.length;
+
+      // 質問テキスト
+      document.getElementById('q-number').textContent = 'Q' + (index + 1);
+      document.getElementById('q-text').textContent = q.text;
+
+      // 選択肢生成
+      const list = document.getElementById('choices-list');
+      list.innerHTML = '';
+      const labels = ['A', 'B', 'C', 'D'];
+      q.choices.forEach((c, i) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'choice-btn';
+        // 既に回答済みの場合は選択状態を復元
+        if (state.answers[index] === i) btn.classList.add('selected');
+        btn.innerHTML =
+          '<span class="choice-label">' + labels[i] + '.</span>' +
+          '<span class="choice-text">' + escapeHtml(c.text) + '</span>';
+        btn.addEventListener('click', () => recordAnswer(index, i));
+        list.appendChild(btn);
+      });
+
+      // 戻るボタン
+      document.getElementById('btn-prev').style.visibility = index === 0 ? 'hidden' : 'visible';
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    /* ===================================================
+       回答記録
+    =================================================== */
+    function recordAnswer(qIndex, choiceIndex) {
+      const q = QUESTIONS[qIndex];
+      const choice = q.choices[choiceIndex];
+
+      // 既存回答があれば前のスコアを減算してからリセット
+      if (state.answers[qIndex] !== undefined) {
+        const prev = q.choices[state.answers[qIndex]];
+        DOMAIN_KEYS.forEach(k => {
+          if (prev.score[k]) state.scores[k] -= prev.score[k];
+        });
+        if (prev.d) state.dCount--;
+      }
+
+      // 新しいスコアを加算
+      DOMAIN_KEYS.forEach(k => {
+        if (choice.score[k]) state.scores[k] += choice.score[k];
+      });
+      if (choice.d) state.dCount++;
+
+      state.answers[qIndex] = choiceIndex;
+
+      // 選択状態を視覚的に反映
+      document.querySelectorAll('#choices-list .choice-btn').forEach((btn, i) => {
+        btn.classList.toggle('selected', i === choiceIndex);
+      });
+
+      // 0.4秒後に次へ
+      setTimeout(() => {
+        if (qIndex < QUESTIONS.length - 1) {
+          renderQuestion(qIndex + 1);
+        } else {
+          calculateAndShowResult();
+        }
+      }, 400);
+    }
+
+    /* ===================================================
+       タイプ判定
+    =================================================== */
+    function top2Keys(scores) {
+      return DOMAIN_KEYS
+        .map(k => ({ k, v: scores[k] }))
+        .sort((a, b) => b.v - a.v)
+        .slice(0, 2)
+        .map(x => x.k);
+    }
+
+    function determineType(scores, dCount) {
+      if (dCount >= 3) return 'organize';
+
+      const sorted = DOMAIN_KEYS
+        .map(k => ({ k, v: scores[k] }))
+        .sort((a, b) => b.v - a.v);
+
+      const top1 = sorted[0].k;
+      const top2 = sorted[1].k;
+      const t = [top1, top2];
+
+      // 職場環境が単独トップかつ5点以上
+      if (top1 === 'env' && scores.env >= 5) return 'escape';
+
+      // 2領域マトリクス（順不同）
+      const has = (a, b) => t.includes(a) && t.includes(b);
+
+      if (has('income', 'work'))  return 'earner';
+      if (has('skill', 'work'))   return 'growth';
+      if (has('style', 'life')) {
+        return scores.style > scores.life ? 'freedom' : 'balance';
+      }
+      if (t.includes('env'))      return 'escape';
+      if (t.includes('style'))    return 'freedom';
+      if (t.includes('life'))     return 'balance';
+      if (t.includes('income'))   return 'earner';
+      if (t.includes('skill'))    return 'growth';
+
+      return 'organize';
+    }
+
+    /* ===================================================
+       結果表示
+    =================================================== */
+    function calculateAndShowResult() {
+      const typeId = determineType(state.scores, state.dCount);
+      state.resultTypeId = typeId;
+      const type = TYPES[typeId];
+
+      // ゲート画面にタイプ名・領域バッジをセット
+      document.getElementById('gate-type-name').textContent = type.name;
+      document.getElementById('gate-domains').innerHTML = type.domains.map(d =>
+        '<span class="domain-badge">' + d + '</span>'
+      ).join('');
+
+      showScreen('gate');
+    }
+
+    function onLineRegister() {
+      const scores = DOMAIN_KEYS.map(k => state.scores[k]).join('-');
+
+      // 診断結果をエンコードしたメッセージを作成
+      const msg = '診断:' + state.resultTypeId + ':' + scores;
+
+      // LINE公式アカウントのチャット画面をメッセージ事前入力付きで開く
+      const lineUrl = 'https://line.me/R/oaMessage/' + LINE_BASIC_ID + '/?text=' + encodeURIComponent(msg);
+      window.open(lineUrl, '_blank');
+
+      // ゲート画面を「送信待ち」状態に切り替える
+      const btn = document.getElementById('btn-line-gate');
+      if (btn) {
+        btn.textContent = '✅ LINEが開きました！';
+        btn.disabled = true;
+      }
+      const note = document.querySelector('.gate-note');
+      if (note) {
+        note.innerHTML = '📩 LINEのトーク画面で<strong>「送信」ボタンを押してください</strong><br>すぐに診断結果が届きます！';
+        note.style.color = 'var(--color-primary)';
+        note.style.fontWeight = '700';
+        note.style.fontSize = '0.9rem';
+      }
+    }
+
+    function showFullResult() {
+      const typeId = state.resultTypeId;
+      const type = TYPES[typeId];
+
+      // タイプ名・説明
+      document.getElementById('result-type-name').textContent = type.name;
+      document.getElementById('result-type-desc').textContent = type.desc;
+
+      // 領域バッジ
+      document.getElementById('result-domains').innerHTML = type.domains.map(d =>
+        '<span class="domain-badge">' + d + '</span>'
+      ).join('');
+
+      // 領域スコアバー
+      const top2 = top2Keys(state.scores);
+      const maxScore = Math.max(...DOMAIN_KEYS.map(k => state.scores[k]), 1);
+      const barList = document.getElementById('domain-bars-list');
+      barList.innerHTML = '';
+      DOMAIN_KEYS
+        .map(k => ({ k, v: state.scores[k] }))
+        .sort((a, b) => b.v - a.v)
+        .forEach(({ k, v }) => {
+          const isTop = top2.includes(k);
+          const pct = Math.round((v / maxScore) * 100);
+          const item = document.createElement('div');
+          item.className = 'domain-bar-item';
+          item.innerHTML =
+            '<span class="domain-name">' + DOMAIN_NAMES[k] + '</span>' +
+            '<div class="domain-bar-track"><div class="domain-bar-fill' + (isTop ? ' top' : '') + '" style="width:0%" data-pct="' + pct + '"></div></div>' +
+            '<span class="domain-score' + (isTop ? ' top' : '') + '">' + v + '</span>';
+          barList.appendChild(item);
+        });
+
+      // ストーリーカード
+      const story = type.story;
+      const storyCard = document.getElementById('story-card');
+      const timelineItems = story.timeline.map((t, i) =>
+        '<div class="timeline-item' + (i === story.timeline.length - 1 ? ' timeline-item-last' : '') + '">' +
+        '<span class="timeline-dot">' + t.phase + '</span>' +
+        '<div class="timeline-body"><p>' + escapeHtml(t.body) + '</p></div>' +
+        '</div>'
+      ).join('');
+
+      storyCard.innerHTML =
+        '<div class="case-study-header">' +
+        '<span class="case-study-badge">同じタイプの方のストーリー</span>' +
+        '</div>' +
+        '<p class="case-study-lead">' + escapeHtml(story.lead) + '</p>' +
+        '<div class="case-study-timeline">' + timelineItems + '</div>' +
+        '<p class="case-study-cta">あなたにも、<em>整理すれば見えてくる「次の一手」</em>があります。<br>まず30分、話してみませんか？</p>';
+
+      // 結果URL付きでLINEに送るボタン
+      const sendBtn = document.getElementById('btn-line-send');
+      if (sendBtn) {
+        sendBtn.onclick = () => {
+          const resultUrl = location.href;
+          navigator.clipboard.writeText(resultUrl).catch(() => {});
+          window.open(LINE_URL, '_blank');
+          sendBtn.textContent = '✅ URLをコピーしました！LINEのトーク画面に貼り付けてください';
+          sendBtn.disabled = true;
+        };
+      }
+
+      // URLボックスを表示
+      const currentUrl = location.href.split('#')[0] + (location.hash || '');
+      const urlInput = document.getElementById('result-url-input');
+      if (urlInput) {
+        urlInput.value = location.href;
+        document.getElementById('result-url-box').style.display = 'block';
+      }
+
+      showScreen('result');
+
+      setTimeout(() => {
+        document.querySelectorAll('.domain-bar-fill').forEach(el => {
+          el.style.width = el.dataset.pct + '%';
+        });
+      }, 150);
+    }
+
+    /* ===================================================
+       インスタシェア画像生成
+    =================================================== */
+    function generateShareImage() {
+      const typeId = state.resultTypeId;
+      const type = TYPES[typeId];
+      if (!type) return;
+
+      const canvas = document.getElementById('share-canvas');
+      const W = 1080, H = 1920;
+      canvas.width = W;
+      canvas.height = H;
+      const ctx = canvas.getContext('2d');
+
+      // 背景グラデーション
+      const grad = ctx.createLinearGradient(0, 0, W, H);
+      grad.addColorStop(0, '#1a3d31');
+      grad.addColorStop(1, '#2c5f4f');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, W, H);
+
+      // 装飾円
+      ctx.beginPath();
+      ctx.arc(W, 0, 500, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(196,163,90,0.07)';
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(0, H, 400, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(196,163,90,0.05)';
+      ctx.fill();
+
+      // ブランド名
+      ctx.fillStyle = '#c4a35a';
+      ctx.font = 'bold 72px "Hiragino Kaku Gothic ProN", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('これから。', W / 2, 200);
+
+      // サブタイトル
+      ctx.fillStyle = 'rgba(255,255,255,0.55)';
+      ctx.font = '44px "Hiragino Kaku Gothic ProN", sans-serif';
+      ctx.fillText('変えたい領域 診断', W / 2, 290);
+
+      // 区切り線
+      ctx.strokeStyle = 'rgba(196,163,90,0.4)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(120, 340); ctx.lineTo(W - 120, 340);
+      ctx.stroke();
+
+      // 「あなたのタイプは」
+      ctx.fillStyle = 'rgba(255,255,255,0.6)';
+      ctx.font = '52px "Hiragino Kaku Gothic ProN", sans-serif';
+      ctx.fillText('あなたのタイプは', W / 2, 460);
+
+      // タイプ名（折り返し対応）
+      ctx.fillStyle = '#c4a35a';
+      ctx.font = 'bold 88px "Hiragino Kaku Gothic ProN", sans-serif';
+      const typeName = type.name;
+      wrapText(ctx, typeName, W / 2, 580, W - 160, 110);
+
+      // 区切り線
+      ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(120, 750); ctx.lineTo(W - 120, 750);
+      ctx.stroke();
+
+      // 領域バッジ
+      const top2 = top2Keys(state.scores);
+      ctx.font = 'bold 52px "Hiragino Kaku Gothic ProN", sans-serif';
+      const badgeW = 280, badgeH = 80, gap = 20;
+      const totalW = top2.length * badgeW + (top2.length - 1) * gap;
+      let bx = (W - totalW) / 2;
+      top2.forEach(k => {
+        const roundRect = (x, y, w, h, r) => {
+          ctx.beginPath();
+          ctx.moveTo(x + r, y);
+          ctx.lineTo(x + w - r, y);
+          ctx.arcTo(x + w, y, x + w, y + r, r);
+          ctx.lineTo(x + w, y + h - r);
+          ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+          ctx.lineTo(x + r, y + h);
+          ctx.arcTo(x, y + h, x, y + h - r, r);
+          ctx.lineTo(x, y + r);
+          ctx.arcTo(x, y, x + r, y, r);
+          ctx.closePath();
+        };
+        roundRect(bx, 790, badgeW, badgeH, 40);
+        ctx.fillStyle = 'rgba(196,163,90,0.2)';
+        ctx.fill();
+        ctx.strokeStyle = '#c4a35a';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.fillStyle = '#c4a35a';
+        ctx.textAlign = 'center';
+        ctx.fillText(DOMAIN_NAMES[k], bx + badgeW / 2, 790 + 54);
+        bx += badgeW + gap;
+      });
+
+      // 説明文（折り返し）
+      ctx.textAlign = 'center';
+      ctx.fillStyle = 'rgba(255,255,255,0.8)';
+      ctx.font = '46px "Hiragino Kaku Gothic ProN", sans-serif';
+      wrapText(ctx, type.desc, W / 2, 960, W - 160, 64);
+
+      // QRコード代わりのURL案内
+      ctx.fillStyle = 'rgba(255,255,255,0.35)';
+      ctx.font = '40px "Hiragino Kaku Gothic ProN", sans-serif';
+      ctx.fillText('詳しくは「これから。」で検索', W / 2, H - 120);
+
+      // ダウンロード
+      const link = document.createElement('a');
+      link.download = 'korekara-shindan.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+
+    function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
+      const chars = [...text];
+      let line = '';
+      let ty = y;
+      for (let i = 0; i < chars.length; i++) {
+        const testLine = line + chars[i];
+        if (ctx.measureText(testLine).width > maxWidth && line !== '') {
+          ctx.fillText(line, x, ty);
+          line = chars[i];
+          ty += lineHeight;
+        } else {
+          line = testLine;
+        }
+      }
+      if (line) ctx.fillText(line, x, ty);
+    }
+
+    /* ===================================================
+       イベントリスナー
+    =================================================== */
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('btn-start').addEventListener('click', () => {
+        resetState();
+        showScreen('question');
+        renderQuestion(0);
+      });
+
+      document.getElementById('btn-prev').addEventListener('click', () => {
+        if (state.currentQ > 0) renderQuestion(state.currentQ - 1);
+      });
+
+      document.getElementById('btn-share').addEventListener('click', generateShareImage);
+
+      document.getElementById('btn-restart').addEventListener('click', () => {
+        resetState();
+        showScreen('intro');
+      });
+
+      document.getElementById('btn-restart-gate').addEventListener('click', () => {
+        resetState();
+        showScreen('intro');
+      });
+
+      // URLコピーボタン
+      document.getElementById('btn-copy-url').addEventListener('click', () => {
+        const input = document.getElementById('result-url-input');
+        input.select();
+        navigator.clipboard.writeText(input.value).then(() => {
+          const status = document.getElementById('copy-status');
+          status.textContent = 'コピーしました！LINEに貼り付けてください';
+          setTimeout(() => { status.textContent = ''; }, 3000);
+        });
+      });
+
+      // URLハッシュから結果を復元（LINEから戻ってきた場合）
+      const hash = location.hash;
+      if (hash.startsWith('#r/')) {
+        const parts = hash.slice(3).split('/');
+        const typeId = parts[0];
+        const scoreVals = parts[1] ? parts[1].split('-').map(Number) : null;
+        if (TYPES[typeId]) {
+          state.resultTypeId = typeId;
+          if (scoreVals && scoreVals.length === 6) {
+            DOMAIN_KEYS.forEach((k, i) => { state.scores[k] = scoreVals[i]; });
+          }
+          showFullResult();
+        }
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>これから。｜理想と現実のギャップ → 選択肢</title>
+  <style>
+:root {
+  --color-bg: #faf9f7;
+  --color-surface: #fff;
+  --color-border: #e5e2de;
+  --color-primary: #2c5f4f;
+  --color-primary-light: #3d7a68;
+  --color-text: #333;
+  --color-text-muted: #666;
+  --color-accent: #c4a35a;
+  --font-sans: "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
+  --shadow: 0 2px 8px rgba(0,0,0,0.06);
+  --radius: 8px;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--color-text);
+  background: var(--color-bg);
+  min-height: 100vh;
+}
+.container { max-width: 720px; margin: 0 auto; padding: 24px 20px 48px; }
+.header { text-align: center; margin-bottom: 32px; }
+.logo { font-size: 1.5rem; font-weight: 700; color: var(--color-primary); margin: 0 0 4px 0; letter-spacing: 0.02em; }
+.tagline { font-size: 0.875rem; color: var(--color-text-muted); margin: 0; }
+.step-indicator { margin-bottom: 28px; }
+.steps { list-style: none; margin: 0; padding: 0; display: flex; justify-content: space-between; gap: 8px; }
+.step {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 8px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  transition: border-color 0.2s, background 0.2s;
+}
+.step.current { border-color: var(--color-primary); background: rgba(44, 95, 79, 0.06); }
+.step.done .step-num { background: var(--color-primary); color: #fff; }
+.step-num {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--color-border); color: var(--color-text-muted);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.875rem; font-weight: 600; margin-bottom: 6px;
+}
+.step.current .step-num { background: var(--color-primary); color: #fff; }
+.step-label { font-size: 0.75rem; color: var(--color-text-muted); text-align: center; line-height: 1.3; }
+.step.current .step-label { color: var(--color-primary); font-weight: 600; }
+.panel { display: none; background: var(--color-surface); border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow); }
+.panel.active { display: block; }
+.narrative {
+  margin: 0 0 20px 0; padding: 12px 16px;
+  background: rgba(44, 95, 79, 0.08); border-left: 4px solid var(--color-primary);
+  border-radius: 0 var(--radius) var(--radius) 0; font-size: 0.9375rem;
+}
+.bridge-message {
+  margin: 0 0 16px 0; padding: 12px 16px;
+  background: rgba(196, 163, 90, 0.12); border-left: 4px solid var(--color-accent);
+  border-radius: 0 var(--radius) var(--radius) 0; font-size: 0.9375rem;
+}
+.gap-instruction { font-size: 0.875rem; color: var(--color-text-muted); margin: 0 0 16px 0; }
+.form-areas { margin-bottom: 24px; }
+.area-block { margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid var(--color-border); }
+.area-block:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+.area-name { font-weight: 600; color: var(--color-primary); margin-bottom: 10px; font-size: 0.9375rem; }
+.area-fields { display: grid; gap: 10px; }
+.area-fields label { display: block; font-size: 0.8125rem; color: var(--color-text-muted); margin-bottom: 2px; }
+.area-fields textarea {
+  width: 100%; min-height: 72px; padding: 10px 12px;
+  border: 1px solid var(--color-border); border-radius: 6px;
+  font-family: inherit; font-size: 0.9375rem; resize: vertical;
+}
+.area-fields textarea:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 2px rgba(44, 95, 79, 0.15); }
+.gap-list { margin-bottom: 24px; }
+.gap-item { background: var(--color-bg); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; border: 1px solid var(--color-border); }
+.gap-item:last-child { margin-bottom: 0; }
+.gap-item-header { font-weight: 600; color: var(--color-primary); margin-bottom: 10px; font-size: 0.9375rem; }
+.gap-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; font-size: 0.875rem; }
+.gap-compare dt { font-weight: 600; color: var(--color-text-muted); margin-bottom: 4px; }
+.gap-compare dd { margin: 0; padding: 8px 10px; background: var(--color-surface); border-radius: 6px; min-height: 44px; white-space: pre-wrap; word-break: break-word; }
+.gap-size { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.gap-size span { font-size: 0.8125rem; color: var(--color-text-muted); margin-right: 4px; }
+.gap-size label { display: inline-flex; align-items: center; gap: 6px; font-size: 0.875rem; cursor: pointer; }
+.gap-size input[type="radio"] { width: 18px; height: 18px; accent-color: var(--color-primary); }
+.option-cards { display: flex; flex-direction: column; gap: 20px; }
+.option-card { background: var(--color-bg); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 20px; transition: border-color 0.2s, box-shadow 0.2s; }
+.option-card:hover { border-color: var(--color-primary-light); box-shadow: var(--shadow); }
+.option-card-title { font-size: 1.125rem; font-weight: 700; color: var(--color-primary); margin: 0 0 16px 0; padding-bottom: 10px; border-bottom: 2px solid var(--color-border); }
+.option-card-axis { margin-bottom: 16px; }
+.option-card-axis dl { margin: 0; display: grid; gap: 8px; }
+.option-card-axis dt { font-size: 0.8125rem; color: var(--color-text-muted); font-weight: 500; margin: 0; }
+.option-card-axis dd { font-size: 0.9375rem; margin: 0; }
+.option-card-rationale { padding: 14px 16px; background: rgba(44, 95, 79, 0.08); border-radius: 6px; border-left: 3px solid var(--color-primary); }
+.option-card-rationale-title { font-size: 0.8125rem; font-weight: 600; color: var(--color-primary); margin: 0 0 8px 0; }
+.option-card-rationale p { margin: 0; font-size: 0.9375rem; line-height: 1.65; }
+.option-card-rationale p + p { margin-top: 8px; }
+.panel-actions { margin-top: 24px; }
+.btn {
+  display: inline-block; padding: 12px 24px; font-size: 1rem; font-family: inherit; font-weight: 600;
+  border: none; border-radius: var(--radius); cursor: pointer; transition: background 0.2s, opacity 0.2s;
+}
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-primary { background: var(--color-primary); color: #fff; }
+.btn-primary:hover:not(:disabled) { background: var(--color-primary-light); }
+.footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--color-border); text-align: center; font-size: 0.8125rem; color: var(--color-text-muted); }
+.footer p { margin: 0; }
+@media (max-width: 600px) {
+  .steps { flex-direction: column; }
+  .step-label { font-size: 0.6875rem; }
+  .gap-compare { grid-template-columns: 1fr; }
+}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <h1 class="logo">これから。</h1>
+      <p class="tagline">「このままでいいのか。」を最初に相談する場所</p>
+    </header>
+    <nav class="step-indicator" aria-label="進捗">
+      <ol class="steps">
+        <li class="step" data-step="1"><span class="step-num">1</span><span class="step-label">現在地を整理する</span></li>
+        <li class="step" data-step="2"><span class="step-num">2</span><span class="step-label">ギャップを確認する</span></li>
+        <li class="step" data-step="3"><span class="step-num">3</span><span class="step-label">選択肢を見る</span></li>
+      </ol>
+    </nav>
+    <main class="main">
+      <section id="panel-step1" class="panel active">
+        <p class="narrative">6つの領域であなたの「理想」と「現実」を教えてください。あとでギャップを一緒に確認します。</p>
+        <form id="form-step1" class="form-areas"></form>
+        <div class="panel-actions">
+          <button type="button" id="btn-to-step2" class="btn btn-primary" disabled>ギャップを確認する</button>
+        </div>
+      </section>
+      <section id="panel-step2" class="panel">
+        <p class="narrative">理想と現実の差が一覧で見えています。「何を変えたいか」がはっきりすると、次の選択肢が選びやすくなります。</p>
+        <p class="gap-instruction">各領域で、理想と現実のギャップをどの程度感じているか選んでください。</p>
+        <div id="gap-list" class="gap-list"></div>
+        <div class="panel-actions">
+          <button type="button" id="btn-to-step3" class="btn btn-primary">選択肢を見る</button>
+        </div>
+      </section>
+      <section id="panel-step3" class="panel">
+        <p class="bridge-message" id="bridge-message"></p>
+        <p class="narrative">あなたのギャップに照らして、理想に近づく4つの選択肢を用意しました。それぞれの「選んだときの根拠」も書いてあるので、比べてみてください。</p>
+        <div id="option-cards" class="option-cards"></div>
+      </section>
+    </main>
+    <footer class="footer">
+      <p>Unicara「これから。」キャリア支援ツール</p>
+    </footer>
+  </div>
+  <script>
+(function () {
+  'use strict';
+  var AREAS = ['収入', '働き方', '職場環境', '仕事内容', 'スキル', '生活'];
+  var OPTIONS = [
+    { id: 1, name: '① 転職+副業', axis: { '届きやすい6領域': '収入・スキル・働き方・仕事内容 など広く', 'リスク・負荷': '高（環境変化＋時間・体力）', '効果が出るまでの目安': '数ヶ月〜1年', '次のステップ': '転職軸の整理＋副業形態・時間の検討' } },
+    { id: 2, name: '② 転職', axis: { '届きやすい6領域': '収入・働き方・職場環境・仕事内容 など', 'リスク・負荷': '高（環境が変わる）', '効果が出るまでの目安': '数ヶ月〜1年', '次のステップ': '判断軸の整理→求人検討' } },
+    { id: 3, name: '③ 副業', axis: { '届きやすい6領域': '収入・スキル・生活 など', 'リスク・負荷': '中（時間・体力）', '効果が出るまでの目安': '数ヶ月〜', '次のステップ': '副業形態・時間の検討' } },
+    { id: 4, name: '④ 現状の見直し', axis: { '届きやすい6領域': '職場環境・働き方・仕事内容 など', 'リスク・負荷': '低（現状維持の延長）', '効果が出るまでの目安': '継続的', '次のステップ': '現職で交渉・調整できることの洗い出し' } }
+  ];
+  var RATIONALE_TEMPLATES = {
+    '収入': { 1: '本業の年収アップと副業収入の両方で、理想の収入に近づけます。', 2: '条件の合う転職で、理想の年収・報酬に近づけます。', 3: '現職を続けながら収入を足し、理想の収入に近づけます。', 4: '昇給・評価制度の見直しや副業許可など、現職内で収入を改善できる可能性があります。' },
+    '働き方': { 1: '転職先の働き方と副業の時間配分の両方を設計できます。', 2: '残業・リモート・裁量など、働き方を条件に含めた会社選びができます。', 3: '副業の形態・時間を自分で決められ、自律性を高められます。', 4: 'リモート・フレックス・残業削減など、現職で交渉・制度活用の余地があります。' },
+    '職場環境': { 1: '本業の環境を変えつつ、副業で別の人間関係・評価に触れられます。', 2: '人間関係・評価制度・企業文化を変えることで、理想の職場に近づけます。', 3: '本業とは別の環境に触れることで、視野や選択肢が広がります。', 4: '異動・評価の見直し・コミュニケーションの工夫など、現職のまま変えられることがあります。' },
+    '仕事内容': { 1: '本業と副業で役割を分け、やりがいや裁量を両立できます。', 2: '業務の性質・裁量・やりがいを条件にした会社選びができます。', 3: '本業とは別の仕事に挑戦し、やりがいや裁量を増やせます。', 4: '役割変更・担当範囲の見直しなど、現職内で仕事内容を調整できる可能性があります。' },
+    'スキル': { 1: '新しい職場と副業の両方で、市場価値や専門性を伸ばせます。', 2: '新しい職種・業界に挑戦し、市場価値やポータブルスキルを高められます。', 3: '本業とは別の分野で経験を積み、市場価値を高められます。', 4: '社内研修・異動・役割拡大など、現職のままスキルを伸ばせる道があります。' },
+    '生活': { 1: '本業と副業のバランスを取ることで、家族・健康・ライフスタイルを設計しやすくなります。', 2: '働き方や勤務地を変えることで、理想の生活に近づけます。', 3: '副業の時間配分を自分で決めることで、生活のコントロール感が高まります。', 4: '働き方の見直しや制度活用で、家族との時間・健康を現職のまま改善できる可能性があります。' }
+  };
+  var MAX_RATIONALE_SENTENCES = 3, GAP_LEVELS = ['小', '中', '大'];
+  var state = { step: 1, formData: {}, gapSizes: {} };
+  function getEl(id) { return document.getElementById(id); }
+  function escapeHtml(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+  function renderStep1() {
+    var form = getEl('form-step1');
+    if (!form) return;
+    form.innerHTML = AREAS.map(function (area, i) {
+      var idealId = 'ideal-' + i, realityId = 'reality-' + i;
+      return '<div class="area-block" data-area="' + area + '"><div class="area-name">' + area + '</div><div class="area-fields"><label for="' + idealId + '">理想</label><textarea id="' + idealId + '" name="ideal" data-area="' + area + '" placeholder="この領域で、理想の状態を書いてください"></textarea><label for="' + realityId + '">現実</label><textarea id="' + realityId + '" name="reality" data-area="' + area + '" placeholder="いまの状態を書いてください"></textarea></div></div>';
+    }).join('');
+    form.querySelectorAll('textarea').forEach(function (ta) { ta.addEventListener('input', checkStep1Complete); });
+    checkStep1Complete();
+  }
+  function checkStep1Complete() {
+    var form = getEl('form-step1');
+    if (!form) return;
+    var filled = 0;
+    AREAS.forEach(function (_, i) {
+      var ideal = (form.querySelector('#ideal-' + i) || {}).value || '', reality = (form.querySelector('#reality-' + i) || {}).value || '';
+      if (ideal.trim() && reality.trim()) filled++;
+    });
+    var btn = getEl('btn-to-step2');
+    if (btn) btn.disabled = filled < AREAS.length;
+  }
+  function collectStep1() {
+    state.formData = {};
+    AREAS.forEach(function (_, i) {
+      var area = AREAS[i], idealEl = getEl('form-step1') && getEl('form-step1').querySelector('#ideal-' + i), realityEl = getEl('form-step1') && getEl('form-step1').querySelector('#reality-' + i);
+      state.formData[area] = { ideal: (idealEl && idealEl.value) ? idealEl.value.trim() : '', reality: (realityEl && realityEl.value) ? realityEl.value.trim() : '' };
+    });
+  }
+  function renderStep2() {
+    var list = getEl('gap-list');
+    if (!list) return;
+    list.innerHTML = AREAS.map(function (area, i) {
+      var d = state.formData[area] || { ideal: '', reality: '' }, nameId = 'gap-size-' + i;
+      var radios = GAP_LEVELS.map(function (level) { return '<label><input type="radio" name="' + nameId + '" value="' + level + '" data-area="' + area + '">' + level + '</label>'; }).join('');
+      return '<div class="gap-item" data-area="' + area + '"><div class="gap-item-header">' + area + '</div><dl class="gap-compare"><div><dt>理想</dt><dd>' + escapeHtml(d.ideal || '—') + '</dd></div><div><dt>現実</dt><dd>' + escapeHtml(d.reality || '—') + '</dd></div></dl><div class="gap-size"><span>ギャップの大きさ：</span>' + radios + '</div></div>';
+    }).join('');
+  }
+  function collectStep2() {
+    state.gapSizes = {};
+    AREAS.forEach(function (_, i) {
+      var area = AREAS[i], name = 'gap-size-' + i, radio = document.querySelector('input[name="' + name + '"]:checked');
+      state.gapSizes[area] = (radio && radio.value) ? radio.value : '小';
+    });
+  }
+  function getAreasWithSignificantGapOrdered() {
+    var list = [];
+    AREAS.forEach(function (area) { var size = state.gapSizes[area]; if (size === '大' || size === '中') list.push({ area: area, size: size }); });
+    list.sort(function (a, b) { return (b.size === '大' ? 1 : 0) - (a.size === '大' ? 1 : 0); });
+    return list.map(function (x) { return x.area; });
+  }
+  function getRationaleForOption(optionId) {
+    var significant = getAreasWithSignificantGapOrdered(), sentences = [];
+    significant.forEach(function (area) {
+      var t = RATIONALE_TEMPLATES[area] && RATIONALE_TEMPLATES[area][optionId];
+      if (t && sentences.length < MAX_RATIONALE_SENTENCES) sentences.push(t);
+    });
+    if (sentences.length === 0) return ['理想と現実の差を埋める一つの道として、この選択肢を検討できます。'];
+    return sentences;
+  }
+  function renderStep3() {
+    var container = getEl('option-cards'), bridgeEl = getEl('bridge-message');
+    if (!container) return;
+    var significant = getAreasWithSignificantGapOrdered();
+    if (bridgeEl) bridgeEl.textContent = significant.length > 0 ? 'あなたのギャップ（' + significant.join('・') + '）に合わせて、理想に近づく4つの選択肢を提示します。' : '理想と現実のギャップを踏まえて、4つの選択肢とそれぞれの根拠をまとめました。';
+    container.innerHTML = OPTIONS.map(function (opt) {
+      var axisHtml = Object.keys(opt.axis).map(function (label) { return '<dt>' + escapeHtml(label) + '</dt><dd>' + escapeHtml(opt.axis[label]) + '</dd>'; }).join('');
+      var rationaleSentences = getRationaleForOption(opt.id);
+      var rationaleHtml = '<div class="option-card-rationale-title">この選択肢を選んだときの根拠</div>' + rationaleSentences.map(function (s) { return '<p>' + escapeHtml(s) + '</p>'; }).join('');
+      return '<div class="option-card" data-option-id="' + opt.id + '"><h3 class="option-card-title">' + escapeHtml(opt.name) + '</h3><div class="option-card-axis"><dl>' + axisHtml + '</dl></div><div class="option-card-rationale">' + rationaleHtml + '</div></div>';
+    }).join('');
+  }
+  function setStep(step) {
+    state.step = step;
+    document.querySelectorAll('.panel').forEach(function (p) { p.classList.remove('active'); });
+    var panel = getEl('panel-step' + step);
+    if (panel) panel.classList.add('active');
+    document.querySelectorAll('.step').forEach(function (el, i) {
+      var num = i + 1;
+      el.classList.remove('current', 'done');
+      if (num === step) el.classList.add('current'); else if (num < step) el.classList.add('done');
+    });
+  }
+  getEl('btn-to-step2').addEventListener('click', function () { collectStep1(); renderStep2(); setStep(2); });
+  getEl('btn-to-step3').addEventListener('click', function () { collectStep2(); renderStep3(); setStep(3); });
+  renderStep1();
+  setStep(1);
+})();
+  </script>
+</body>
+</html>
