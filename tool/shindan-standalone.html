@@ -2306,7 +2306,7 @@ body {
 
       // typeIdを直接メッセージに埋め込む（Supabase不要・即時起動）
       const msg = 'SHINDAN-' + state.resultTypeId;
-      const lineUrl = 'https://line.me/R/oaMessage/@' + LINE_BASIC_ID + '?text=' + encodeURIComponent(msg);
+      const lineUrl = 'https://line.me/R/oaMessage/@' + LINE_BASIC_ID + '/?text=' + encodeURIComponent(msg);
       location.href = lineUrl;
 
       // UI更新
