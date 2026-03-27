@@ -460,6 +460,8 @@
 
 <script>
 const API = 'https://xtcopreojvmovdswhhgk.supabase.co/functions/v1/booking';
+const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0Y29wcmVvanZtb3Zkc3doaGdrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3MjkzMjQsImV4cCI6MjA4OTMwNTMyNH0.l_ylqxCQ9LJDdPEBd_pbzjzk4N9v6hovqP2MOn1cGMQ';
+const HEADERS = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${ANON_KEY}`, 'apikey': ANON_KEY };
 
 let selectedDate = '';
 let selectedSlot = '';
@@ -513,7 +515,7 @@ async function startBooking() {
   document.getElementById('introError').innerHTML = '';
 
   try {
-    const res = await fetch(`${API}?action=available_dates&days=14`);
+    const res = await fetch(`${API}?action=available_dates&days=14`, { headers: HEADERS });
     const data = await res.json();
     if (data.error) throw new Error(data.error);
     availableDates = data.dates || [];
@@ -581,7 +583,7 @@ async function selectDate(dateStr, btn) {
     goScreen('time');
 
     try {
-      const res = await fetch(`${API}?action=slots&date=${dateStr}`);
+      const res = await fetch(`${API}?action=slots&date=${dateStr}`, { headers: HEADERS });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       renderTimeSlots(data.slots || []);
@@ -685,7 +687,7 @@ async function submitBooking() {
   try {
     const res = await fetch(API, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: HEADERS,
       body: JSON.stringify(payload),
     });
     const data = await res.json();
