@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>無料面談のご予約 ｜ これから。</title>
+  <meta name="description" content="30分の無料キャリア面談をご予約できます。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700&family=Zen+Maru+Gothic:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --color-bg: #faf9f7;
+      --color-surface: #fff;
+      --color-border: #e5e2de;
+      --color-primary: #2c5f4f;
+      --color-primary-light: #3d7a68;
+      --color-text: #333;
+      --color-text-muted: #666;
+      --color-accent: #c4a35a;
+      --font-sans: "Hiragino Kaku Gothic ProN","Hiragino Sans",Meiryo,sans-serif;
+      --shadow: 0 2px 8px rgba(0,0,0,0.06);
+      --radius: 10px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-sans);
+      font-size: 16px;
+      line-height: 1.6;
+      color: var(--color-text);
+      background: var(--color-bg);
+      min-height: 100vh;
+    }
+    .container { max-width: 520px; margin: 0 auto; padding: 24px 20px 60px; }
+
+    /* ── Header ── */
+    .header { text-align: center; padding: 24px 0 28px; }
+    .logo-img { height: 70px; width: auto; display: block; margin: 0 auto; }
+    .tagline {
+      font-size: 0.8125rem;
+      color: var(--color-text-muted);
+      margin: -14px 0 0;
+      font-family: 'Zen Maru Gothic','M PLUS Rounded 1c',var(--font-sans);
+      font-weight: 700;
+    }
+
+    /* ── Steps ── */
+    .step-bar {
+      display: flex;
+      justify-content: center;
+      gap: 0;
+      margin-bottom: 28px;
+    }
+    .step-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.75rem;
+      color: var(--color-text-muted);
+    }
+    .step-item.active { color: var(--color-primary); font-weight: 700; }
+    .step-item.done { color: var(--color-primary-light); }
+    .step-num {
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      background: var(--color-border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.6875rem;
+      font-weight: 700;
+    }
+    .step-item.active .step-num { background: var(--color-primary); color: #fff; }
+    .step-item.done .step-num { background: var(--color-primary-light); color: #fff; }
+    .step-divider { width: 24px; height: 1px; background: var(--color-border); margin: 0 4px; align-self: center; }
+
+    /* ── Card ── */
+    .card {
+      background: var(--color-surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 24px;
+      margin-bottom: 16px;
+    }
+    .card-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--color-primary);
+      margin-bottom: 16px;
+    }
+
+    /* ── Intro ── */
+    .intro-badge {
+      display: inline-block;
+      background: #eef5f3;
+      color: var(--color-primary);
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 20px;
+      margin-bottom: 12px;
+    }
+    .intro-title {
+      font-size: 1.375rem;
+      font-weight: 700;
+      color: var(--color-primary);
+      margin-bottom: 10px;
+    }
+    .intro-text { font-size: 0.9rem; color: var(--color-text-muted); line-height: 1.7; }
+    .intro-points {
+      list-style: none;
+      margin: 14px 0 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .intro-points li {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 0.875rem;
+    }
+    .intro-points li .icon { font-size: 1rem; flex-shrink: 0; }
+
+    /* ── Loading ── */
+    .loading {
+      text-align: center;
+      padding: 32px 0;
+      color: var(--color-text-muted);
+      font-size: 0.9rem;
+    }
+    .spinner {
+      width: 32px; height: 32px;
+      border: 3px solid var(--color-border);
+      border-top-color: var(--color-primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 12px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Date grid ── */
+    .date-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+    @media (max-width: 360px) { .date-grid { grid-template-columns: repeat(3, 1fr); } }
+    .date-btn {
+      border: 1.5px solid var(--color-border);
+      background: var(--color-surface);
+      border-radius: 8px;
+      padding: 10px 4px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .date-btn:hover { border-color: var(--color-primary-light); background: #f0f6f4; }
+    .date-btn.selected { border-color: var(--color-primary); background: var(--color-primary); color: #fff; }
+    .date-btn .month { font-size: 0.6875rem; color: var(--color-text-muted); }
+    .date-btn.selected .month { color: rgba(255,255,255,0.8); }
+    .date-btn .day { font-size: 1.125rem; font-weight: 700; }
+    .date-btn .weekday { font-size: 0.6875rem; color: var(--color-text-muted); }
+    .date-btn.selected .weekday { color: rgba(255,255,255,0.8); }
+    .date-btn .weekday.sat { color: #3a7abf; }
+    .date-btn .weekday.sun { color: #c0392b; }
+    .date-btn.selected .weekday.sat,
+    .date-btn.selected .weekday.sun { color: rgba(255,255,255,0.9); }
+
+    /* ── Time slots ── */
+    .time-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+    .time-btn {
+      border: 1.5px solid var(--color-border);
+      background: var(--color-surface);
+      border-radius: 8px;
+      padding: 10px 0;
+      text-align: center;
+      cursor: pointer;
+      font-size: 0.9375rem;
+      font-weight: 700;
+      transition: all 0.15s;
+    }
+    .time-btn:hover { border-color: var(--color-primary-light); background: #f0f6f4; }
+    .time-btn.selected { border-color: var(--color-primary); background: var(--color-primary); color: #fff; }
+
+    /* ── Form ── */
+    .form-group { margin-bottom: 18px; }
+    .form-label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .form-label .required {
+      display: inline-block;
+      background: #e74c3c;
+      color: #fff;
+      font-size: 0.625rem;
+      padding: 1px 5px;
+      border-radius: 3px;
+      margin-left: 5px;
+      vertical-align: middle;
+    }
+    .form-label .optional {
+      display: inline-block;
+      background: var(--color-border);
+      color: var(--color-text-muted);
+      font-size: 0.625rem;
+      padding: 1px 5px;
+      border-radius: 3px;
+      margin-left: 5px;
+      vertical-align: middle;
+    }
+    .form-input, .form-textarea {
+      width: 100%;
+      border: 1.5px solid var(--color-border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 1rem;
+      font-family: inherit;
+      color: var(--color-text);
+      background: var(--color-surface);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .form-input:focus, .form-textarea:focus { border-color: var(--color-primary); }
+    .form-textarea { resize: vertical; min-height: 80px; }
+
+    /* ── Booking summary ── */
+    .booking-summary {
+      background: #eef5f3;
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin-bottom: 20px;
+      font-size: 0.9rem;
+    }
+    .booking-summary .label { color: var(--color-text-muted); font-size: 0.8rem; margin-bottom: 2px; }
+    .booking-summary .value { font-weight: 700; color: var(--color-primary); font-size: 1rem; }
+
+    /* ── Buttons ── */
+    .btn-primary {
+      display: block;
+      width: 100%;
+      padding: 14px;
+      background: var(--color-primary);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s;
+      text-align: center;
+    }
+    .btn-primary:hover { background: var(--color-primary-light); }
+    .btn-primary:disabled { background: var(--color-border); cursor: not-allowed; }
+    .btn-secondary {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      background: transparent;
+      color: var(--color-text-muted);
+      border: 1.5px solid var(--color-border);
+      border-radius: 8px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      margin-top: 10px;
+      text-align: center;
+    }
+    .btn-secondary:hover { border-color: var(--color-text-muted); color: var(--color-text); }
+
+    /* ── Error ── */
+    .error-msg {
+      background: #fdf0ee;
+      color: #c0392b;
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-size: 0.875rem;
+      margin-top: 12px;
+    }
+
+    /* ── Success ── */
+    .success-icon {
+      width: 64px; height: 64px;
+      background: var(--color-primary);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2rem;
+      margin: 0 auto 20px;
+    }
+    .success-title {
+      text-align: center;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--color-primary);
+      margin-bottom: 10px;
+    }
+    .success-text { text-align: center; font-size: 0.9rem; color: var(--color-text-muted); line-height: 1.7; }
+    .success-detail {
+      background: #eef5f3;
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin: 18px 0;
+      font-size: 0.9rem;
+    }
+    .success-detail .row { display: flex; gap: 8px; margin-bottom: 4px; }
+    .success-detail .lbl { color: var(--color-text-muted); flex-shrink: 0; width: 80px; }
+    .success-detail .val { font-weight: 700; }
+
+    /* ── Screen visibility ── */
+    .screen { display: none; }
+    .screen.active { display: block; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <img src="logo.png" alt="これから。" class="logo-img" onerror="this.style.display='none'">
+    <p class="tagline">キャリアの「これから。」を、一緒に整理しましょう。</p>
+  </div>
+
+  <!-- ステップバー -->
+  <div class="step-bar" id="stepBar">
+    <div class="step-item active" data-step="1">
+      <div class="step-num">1</div><span>日程</span>
+    </div>
+    <div class="step-divider"></div>
+    <div class="step-item" data-step="2">
+      <div class="step-num">2</div><span>時間</span>
+    </div>
+    <div class="step-divider"></div>
+    <div class="step-item" data-step="3">
+      <div class="step-num">3</div><span>お名前</span>
+    </div>
+    <div class="step-divider"></div>
+    <div class="step-item" data-step="4">
+      <div class="step-num">4</div><span>確認</span>
+    </div>
+  </div>
+
+  <!-- Step 0: イントロ -->
+  <div class="screen active" id="screen-intro">
+    <div class="card">
+      <div class="intro-badge">無料 ・ 30分 ・ オンライン</div>
+      <div class="intro-title">まず話してみませんか？</div>
+      <p class="intro-text">
+        キャリアのモヤモヤを整理し、「次の一手」を一緒に考える30分の無料面談です。<br>
+        担当者のカレンダーから空き時間を確認して、今すぐ予約できます。
+      </p>
+      <ul class="intro-points">
+        <li><span class="icon">✅</span><span>完全無料・売り込みなし</span></li>
+        <li><span class="icon">✅</span><span>ZoomまたはGoogleMeetでオンライン対応</span></li>
+        <li><span class="icon">✅</span><span>予約後すぐに確認メールが届きます</span></li>
+      </ul>
+    </div>
+    <button class="btn-primary" onclick="startBooking()">空き時間を確認して予約する</button>
+    <div id="introError"></div>
+  </div>
+
+  <!-- Step 1: 日程選択 -->
+  <div class="screen" id="screen-date">
+    <div class="card">
+      <div class="card-title">日程を選んでください</div>
+      <div id="dateContent">
+        <div class="loading"><div class="spinner"></div>空き状況を確認中...</div>
+      </div>
+    </div>
+    <button class="btn-secondary" onclick="goScreen('intro')">戻る</button>
+  </div>
+
+  <!-- Step 2: 時間選択 -->
+  <div class="screen" id="screen-time">
+    <div class="card">
+      <div class="card-title" id="timeDateLabel">時間を選んでください</div>
+      <div id="timeContent">
+        <div class="loading"><div class="spinner"></div>空き時間を確認中...</div>
+      </div>
+    </div>
+    <button class="btn-secondary" onclick="goScreen('date')">日程を選び直す</button>
+  </div>
+
+  <!-- Step 3: お名前・連絡先 -->
+  <div class="screen" id="screen-form">
+    <div class="card">
+      <div class="card-title">お名前と連絡先を入力してください</div>
+      <div class="booking-summary">
+        <div class="label">予約日時</div>
+        <div class="value" id="formSlotLabel">―</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">お名前 <span class="required">必須</span></label>
+        <input type="text" class="form-input" id="fieldName" placeholder="山田 太郎">
+      </div>
+      <div class="form-group">
+        <label class="form-label">メールアドレス <span class="required">必須</span></label>
+        <input type="email" class="form-input" id="fieldEmail" placeholder="your@email.com">
+        <div style="font-size:0.75rem;color:var(--color-text-muted);margin-top:4px;">
+          予約確認メールをお送りします
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">電話番号 <span class="optional">任意</span></label>
+        <input type="tel" class="form-input" id="fieldPhone" placeholder="090-0000-0000">
+      </div>
+      <div class="form-group">
+        <label class="form-label">ご相談の概要 <span class="optional">任意</span></label>
+        <textarea class="form-textarea" id="fieldMessage" placeholder="現在の状況や気になっていることを簡単にお聞かせください"></textarea>
+      </div>
+      <button class="btn-primary" onclick="goToConfirm()">確認画面へ</button>
+      <div id="formError"></div>
+    </div>
+    <button class="btn-secondary" onclick="goScreen('time')">時間を選び直す</button>
+  </div>
+
+  <!-- Step 4: 確認 -->
+  <div class="screen" id="screen-confirm">
+    <div class="card">
+      <div class="card-title">予約内容の確認</div>
+      <div class="booking-summary">
+        <div class="label">予約日時</div>
+        <div class="value" id="confirmSlot">―</div>
+      </div>
+      <div style="font-size:0.9rem;margin-bottom:4px;"><strong>お名前</strong></div>
+      <div style="margin-bottom:14px;" id="confirmName">―</div>
+      <div style="font-size:0.9rem;margin-bottom:4px;"><strong>メールアドレス</strong></div>
+      <div style="margin-bottom:14px;" id="confirmEmail">―</div>
+      <div id="confirmPhoneRow" style="display:none">
+        <div style="font-size:0.9rem;margin-bottom:4px;"><strong>電話番号</strong></div>
+        <div style="margin-bottom:14px;" id="confirmPhone">―</div>
+      </div>
+      <div id="confirmMsgRow" style="display:none">
+        <div style="font-size:0.9rem;margin-bottom:4px;"><strong>ご相談の概要</strong></div>
+        <div style="margin-bottom:14px;font-size:0.875rem;color:var(--color-text-muted);" id="confirmMsg">―</div>
+      </div>
+      <button class="btn-primary" id="submitBtn" onclick="submitBooking()">この内容で予約する</button>
+      <div id="confirmError"></div>
+    </div>
+    <button class="btn-secondary" onclick="goScreen('form')">内容を修正する</button>
+  </div>
+
+  <!-- 完了 -->
+  <div class="screen" id="screen-success">
+    <div class="card" style="text-align:center;padding:36px 24px;">
+      <div class="success-icon">✓</div>
+      <div class="success-title">予約が完了しました</div>
+      <p class="success-text">
+        ご登録のメールアドレスに確認メールが届きます。<br>
+        当日、担当者よりZoom/Meetのリンクをお送りします。
+      </p>
+      <div class="success-detail" id="successDetail"></div>
+      <p class="success-text" style="font-size:0.8rem;margin-top:8px;">
+        ご不明点はLINEにてお気軽にご連絡ください。
+      </p>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = 'https://xtcopreojvmovdswhhgk.supabase.co/functions/v1/booking';
+
+let selectedDate = '';
+let selectedSlot = '';
+let availableDates = [];
+
+const WEEKDAYS = ['日','月','火','水','木','金','土'];
+
+function formatDateJP(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00+09:00');
+  const m = d.getMonth() + 1;
+  const day = d.getDate();
+  const w = WEEKDAYS[d.getDay()];
+  return `${m}月${day}日（${w}）`;
+}
+
+function formatSlotJP(slot) {
+  const d = new Date(slot);
+  // JST
+  const jst = new Date(d.getTime() + 9 * 60 * 60 * 1000);
+  const m = jst.getUTCMonth() + 1;
+  const day = jst.getUTCDate();
+  const w = WEEKDAYS[jst.getUTCDay()];
+  const hh = String(jst.getUTCHours()).padStart(2,'0');
+  const mm = String(jst.getUTCMinutes()).padStart(2,'0');
+  const endMin = jst.getUTCHours() * 60 + jst.getUTCMinutes() + 30;
+  const eh = String(Math.floor(endMin/60)).padStart(2,'0');
+  const em = String(endMin%60).padStart(2,'0');
+  return `${m}月${day}日（${w}）${hh}:${mm} 〜 ${eh}:${em}`;
+}
+
+function goScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+
+  // step bar
+  const stepMap = { intro: 0, date: 1, time: 2, form: 3, confirm: 4, success: 5 };
+  const cur = stepMap[name] || 0;
+  document.querySelectorAll('.step-item').forEach(el => {
+    const n = parseInt(el.dataset.step);
+    el.classList.remove('active','done');
+    if (n === cur) el.classList.add('active');
+    else if (n < cur) el.classList.add('done');
+  });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+async function startBooking() {
+  const btn = document.querySelector('#screen-intro .btn-primary');
+  btn.disabled = true;
+  btn.textContent = '確認中...';
+  document.getElementById('introError').innerHTML = '';
+
+  try {
+    const res = await fetch(`${API}?action=available_dates&days=14`);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    availableDates = data.dates || [];
+
+    if (availableDates.length === 0) {
+      document.getElementById('introError').innerHTML =
+        '<div class="error-msg">現在、空き枠がありません。しばらくしてから再度お試しください。</div>';
+      btn.disabled = false;
+      btn.textContent = '空き時間を確認して予約する';
+      return;
+    }
+
+    renderDates();
+    goScreen('date');
+  } catch(e) {
+    document.getElementById('introError').innerHTML =
+      `<div class="error-msg">空き状況の取得に失敗しました。時間をおいてお試しください。<br><small>${e.message}</small></div>`;
+    btn.disabled = false;
+    btn.textContent = '空き時間を確認して予約する';
+  }
+}
+
+function renderDates() {
+  const container = document.getElementById('dateContent');
+  if (availableDates.length === 0) {
+    container.innerHTML = '<p style="color:var(--color-text-muted);font-size:0.9rem;">空き枠がありません。</p>';
+    return;
+  }
+  const grid = document.createElement('div');
+  grid.className = 'date-grid';
+
+  availableDates.forEach(dateStr => {
+    const d = new Date(dateStr + 'T00:00:00+09:00');
+    const m = d.getMonth() + 1;
+    const day = d.getDate();
+    const w = d.getDay();
+    const weekLabel = WEEKDAYS[w];
+    const cls = w === 0 ? 'sun' : w === 6 ? 'sat' : '';
+
+    const btn = document.createElement('button');
+    btn.className = 'date-btn';
+    btn.innerHTML = `
+      <div class="month">${m}月</div>
+      <div class="day">${day}</div>
+      <div class="weekday ${cls}">${weekLabel}</div>
+    `;
+    btn.onclick = () => selectDate(dateStr, btn);
+    grid.appendChild(btn);
+  });
+
+  container.innerHTML = '';
+  container.appendChild(grid);
+}
+
+async function selectDate(dateStr, btn) {
+  document.querySelectorAll('.date-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  selectedDate = dateStr;
+
+  // 自動で次の画面へ（少し間を置く）
+  setTimeout(async () => {
+    document.getElementById('timeDateLabel').textContent = `${formatDateJP(dateStr)}の時間を選んでください`;
+    document.getElementById('timeContent').innerHTML =
+      '<div class="loading"><div class="spinner"></div>空き時間を確認中...</div>';
+    goScreen('time');
+
+    try {
+      const res = await fetch(`${API}?action=slots&date=${dateStr}`);
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      renderTimeSlots(data.slots || []);
+    } catch(e) {
+      document.getElementById('timeContent').innerHTML =
+        `<div class="error-msg">時間の取得に失敗しました。<br><small>${e.message}</small></div>`;
+    }
+  }, 150);
+}
+
+function renderTimeSlots(slots) {
+  const container = document.getElementById('timeContent');
+  if (slots.length === 0) {
+    container.innerHTML = '<p style="color:var(--color-text-muted);font-size:0.9rem;">この日は空き枠がありません。別の日をお選びください。</p>';
+    return;
+  }
+  const grid = document.createElement('div');
+  grid.className = 'time-grid';
+
+  slots.forEach(slot => {
+    const d = new Date(slot);
+    const jst = new Date(d.getTime() + 9 * 60 * 60 * 1000);
+    const hh = String(jst.getUTCHours()).padStart(2,'0');
+    const mm = String(jst.getUTCMinutes()).padStart(2,'0');
+
+    const btn = document.createElement('button');
+    btn.className = 'time-btn';
+    btn.textContent = `${hh}:${mm}`;
+    btn.onclick = () => selectTime(slot, btn);
+    grid.appendChild(btn);
+  });
+
+  container.innerHTML = '';
+  container.appendChild(grid);
+}
+
+function selectTime(slot, btn) {
+  document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  selectedSlot = slot;
+
+  setTimeout(() => {
+    document.getElementById('formSlotLabel').textContent = formatSlotJP(slot);
+    goScreen('form');
+  }, 150);
+}
+
+function goToConfirm() {
+  const name = document.getElementById('fieldName').value.trim();
+  const email = document.getElementById('fieldEmail').value.trim();
+  const phone = document.getElementById('fieldPhone').value.trim();
+  const message = document.getElementById('fieldMessage').value.trim();
+
+  if (!name) {
+    document.getElementById('formError').innerHTML = '<div class="error-msg">お名前を入力してください。</div>';
+    return;
+  }
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    document.getElementById('formError').innerHTML = '<div class="error-msg">正しいメールアドレスを入力してください。</div>';
+    return;
+  }
+  document.getElementById('formError').innerHTML = '';
+
+  document.getElementById('confirmSlot').textContent = formatSlotJP(selectedSlot);
+  document.getElementById('confirmName').textContent = name;
+  document.getElementById('confirmEmail').textContent = email;
+
+  const phoneRow = document.getElementById('confirmPhoneRow');
+  if (phone) {
+    document.getElementById('confirmPhone').textContent = phone;
+    phoneRow.style.display = '';
+  } else {
+    phoneRow.style.display = 'none';
+  }
+
+  const msgRow = document.getElementById('confirmMsgRow');
+  if (message) {
+    document.getElementById('confirmMsg').textContent = message;
+    msgRow.style.display = '';
+  } else {
+    msgRow.style.display = 'none';
+  }
+
+  goScreen('confirm');
+}
+
+async function submitBooking() {
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.textContent = '予約中...';
+  document.getElementById('confirmError').innerHTML = '';
+
+  const payload = {
+    slot: selectedSlot,
+    name: document.getElementById('fieldName').value.trim(),
+    email: document.getElementById('fieldEmail').value.trim(),
+    phone: document.getElementById('fieldPhone').value.trim() || undefined,
+    message: document.getElementById('fieldMessage').value.trim() || undefined,
+  };
+
+  try {
+    const res = await fetch(API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+
+    if (!res.ok || data.error) {
+      throw new Error(data.error || '予約に失敗しました');
+    }
+
+    document.getElementById('successDetail').innerHTML = `
+      <div class="row"><span class="lbl">日時</span><span class="val">${formatSlotJP(selectedSlot)}</span></div>
+      <div class="row"><span class="lbl">お名前</span><span class="val">${payload.name} 様</span></div>
+      <div class="row"><span class="lbl">メール</span><span class="val">${payload.email}</span></div>
+    `;
+    goScreen('success');
+  } catch(e) {
+    document.getElementById('confirmError').innerHTML =
+      `<div class="error-msg">${e.message}</div>`;
+    btn.disabled = false;
+    btn.textContent = 'この内容で予約する';
+  }
+}
+</script>
+</body>
+</html>
