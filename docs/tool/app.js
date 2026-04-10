@@ -188,12 +188,86 @@
     priorityOrder: []  // area[]（優先順位順、全6領域）
   };
 
+  var LOCAL_STORAGE_KEY = 'corecara_draft';
+  var autosaveTimer = null;
+
   function getEl(id) { return document.getElementById(id); }
   function escapeHtml(s) {
     const div = document.createElement('div');
     div.textContent = s;
     return div.innerHTML;
   }
+
+  // ─── localStorage 自動保存・復元 ────────────────────────────────────
+
+  function collectCurrentInputs() {
+    // 現在表示中のステップに応じて入力値を収集
+    if (state.step === 1) collectStep1();
+    else if (state.step === 2) collectStep2();
+    else if (state.step === 3) collectImprovements();
+  }
+
+  function saveToLocal() {
+    collectCurrentInputs();
+    var draft = {
+      step: state.step,
+      ideals: state.ideals,
+      scores: state.scores,
+      reasons: state.reasons,
+      improvements: state.improvements,
+      priorityOrder: state.priorityOrder,
+      savedAt: new Date().toISOString()
+    };
+    try {
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(draft));
+    } catch (e) { /* ignore quota errors */ }
+    showAutosaveIndicator();
+  }
+
+  function loadFromLocal() {
+    try {
+      var raw = localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (!raw) return null;
+      return JSON.parse(raw);
+    } catch (e) { return null; }
+  }
+
+  function clearLocal() {
+    try { localStorage.removeItem(LOCAL_STORAGE_KEY); } catch (e) {}
+  }
+
+  function restoreFromDraft(draft) {
+    state.step = draft.step || 1;
+    state.ideals = draft.ideals || {};
+    state.scores = draft.scores || {};
+    state.reasons = draft.reasons || {};
+    state.improvements = draft.improvements || {};
+    state.priorityOrder = draft.priorityOrder || [];
+
+    renderStep1();
+    if (state.step >= 2) renderStep2();
+    if (state.step >= 3) renderStep3();
+    setStep(state.step);
+  }
+
+  function scheduleAutosave() {
+    if (autosaveTimer) clearTimeout(autosaveTimer);
+    autosaveTimer = setTimeout(saveToLocal, 1000);
+  }
+
+  function showAutosaveIndicator() {
+    var el = getEl('autosave-indicator');
+    if (!el) return;
+    el.classList.add('visible');
+    setTimeout(function () { el.classList.remove('visible'); }, 1500);
+  }
+
+  // グローバルinputイベントで自動保存をトリガー
+  document.addEventListener('input', function (e) {
+    if (e.target.closest('.container')) {
+      scheduleAutosave();
+    }
+  });
 
   // ─── Step 1: 理想の状態を記述 ──────────────────────────────────────────
 
@@ -723,6 +797,7 @@
       collectStep1();
       renderStep2();
       setStep(2);
+      saveToLocal();
     });
 
     b = getEl('btn-back-step1');
@@ -730,6 +805,7 @@
       collectStep2();
       renderStep1();
       setStep(1);
+      saveToLocal();
     });
 
     b = getEl('btn-to-step3');
@@ -738,6 +814,7 @@
       state.priorityOrder = []; // ギャップ順をリセット（スコアが変わった可能性）
       renderStep3();
       setStep(3);
+      saveToLocal();
     });
 
     b = getEl('btn-back-step2');
@@ -745,6 +822,7 @@
       collectImprovements();
       renderStep2();
       setStep(2);
+      saveToLocal();
     });
 
     b = getEl('btn-to-step4');
@@ -752,12 +830,14 @@
       collectImprovements();
       renderStep4();
       setStep(4);
+      saveToLocal();
     });
 
     b = getEl('btn-back-step3');
     if (b) b.addEventListener('click', function () {
       renderStep3();
       setStep(3);
+      saveToLocal();
     });
 
     b = getEl('btn-pdf');
@@ -789,6 +869,54 @@
       } else {
         btnSave.textContent = '保存済み ✓';
         if (status) { status.textContent = '保存しました！このメールアドレスで後から見返せます。'; status.className = 'save-status success'; }
+        clearLocal(); // 完了保存後は下書きをクリア
+      }
+    });
+
+    // 途中保存モーダルを開く
+    b = getEl('btn-autosave');
+    if (b) b.addEventListener('click', function () {
+      var modal = getEl('autosave-modal');
+      if (modal) modal.hidden = false;
+    });
+
+    // 途中保存モーダルを閉じる
+    b = getEl('btn-close-autosave');
+    if (b) b.addEventListener('click', function () {
+      var modal = getEl('autosave-modal');
+      if (modal) modal.hidden = true;
+      var st = getEl('autosave-status');
+      if (st) { st.textContent = ''; st.className = 'save-status'; }
+    });
+
+    // 途中保存実行
+    var btnDoAutosave = getEl('btn-do-autosave');
+    if (btnDoAutosave) btnDoAutosave.addEventListener('click', async function () {
+      var name = (getEl('autosave-name') || {}).value || '';
+      var email = (getEl('autosave-email') || {}).value || '';
+      var status = getEl('autosave-status');
+      if (!name.trim()) {
+        if (status) { status.textContent = '氏名を入力してください。'; status.className = 'save-status error'; }
+        return;
+      }
+      if (!email.trim() || !email.includes('@')) {
+        if (status) { status.textContent = 'メールアドレスを正しく入力してください。'; status.className = 'save-status error'; }
+        return;
+      }
+      collectCurrentInputs();
+      btnDoAutosave.disabled = true;
+      btnDoAutosave.textContent = '保存中…';
+      var { error } = await saveSession(name, email);
+      if (error) {
+        btnDoAutosave.disabled = false;
+        btnDoAutosave.textContent = '途中保存する';
+        if (status) { status.textContent = '保存に失敗しました：' + error.message; status.className = 'save-status error'; }
+      } else {
+        btnDoAutosave.disabled = false;
+        btnDoAutosave.textContent = '途中保存する';
+        if (status) { status.textContent = 'ステップ' + state.step + 'の状態を保存しました！'; status.className = 'save-status success'; }
+        // name/emailをlocalStorageにも記憶（次回の手間を省く）
+        try { localStorage.setItem('corecara_user', JSON.stringify({ name: name.trim(), email: email.trim().toLowerCase() })); } catch (e) {}
       }
     });
 
@@ -853,8 +981,48 @@
 
   // ─── 初期化 ────────────────────────────────────────────────────────────
 
+  // 自動保存インジケーターを追加
+  var indicator = document.createElement('div');
+  indicator.id = 'autosave-indicator';
+  indicator.className = 'autosave-indicator';
+  indicator.textContent = '自動保存しました';
+  document.body.appendChild(indicator);
+
   renderStep1();
   setStep(1);
   bindEvents();
+
+  // localStorage に下書きがあれば再開バナーを表示
+  var draft = loadFromLocal();
+  if (draft && draft.step && draft.step > 1) {
+    var banner = getEl('resume-banner');
+    if (banner) banner.hidden = false;
+
+    var btnYes = getEl('btn-resume-yes');
+    var btnNo = getEl('btn-resume-no');
+
+    if (btnYes) btnYes.addEventListener('click', function () {
+      restoreFromDraft(draft);
+      banner.hidden = true;
+    });
+
+    if (btnNo) btnNo.addEventListener('click', function () {
+      clearLocal();
+      banner.hidden = true;
+    });
+  } else if (draft && draft.step === 1) {
+    // Step1でも入力途中のデータがあれば静かに復元
+    var hasData = Object.keys(draft.ideals || {}).some(function (k) { return draft.ideals[k]; });
+    if (hasData) {
+      restoreFromDraft(draft);
+    }
+  }
+
+  // 途中保存モーダルに前回のname/emailを復元
+  try {
+    var savedUser = JSON.parse(localStorage.getItem('corecara_user') || '{}');
+    if (savedUser.name) { var nameEl = getEl('autosave-name'); if (nameEl) nameEl.value = savedUser.name; }
+    if (savedUser.email) { var emailEl = getEl('autosave-email'); if (emailEl) emailEl.value = savedUser.email; }
+  } catch (e) {}
 
 })();

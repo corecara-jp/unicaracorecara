@@ -18,6 +18,7 @@
       </h1>
       <p class="tagline">「このままでいいのか。」を最初に相談する場所</p>
       <button type="button" id="btn-open-history" class="btn-history-link">過去の記録を見る</button>
+      <button type="button" id="btn-autosave" class="btn-autosave-link">途中保存する</button>
     </header>
 
     <!-- ステップインジケーター -->
@@ -110,6 +111,36 @@
       <p>Unicara「これから。」キャリア支援ツール</p>
     </footer>
   </div>
+  <!-- 途中保存モーダル -->
+  <div id="autosave-modal" class="modal-overlay" hidden>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">途中保存</h2>
+        <button type="button" id="btn-close-autosave" class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="save-desc">氏名とメールアドレスを入力すると、途中の状態をサーバーに保存できます。<br>同じメールアドレスで「過去の記録を見る」から再開できます。</p>
+        <div class="save-form">
+          <input type="text" id="autosave-name" placeholder="氏名（例：山田 太郎）" class="email-input">
+          <input type="email" id="autosave-email" placeholder="your@email.com" class="email-input">
+          <button type="button" id="btn-do-autosave" class="btn btn-accent">途中保存する</button>
+        </div>
+        <p id="autosave-status" class="save-status"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 再開確認バナー -->
+  <div id="resume-banner" class="resume-banner" hidden>
+    <div class="resume-banner-inner">
+      <p class="resume-text">前回の入力データが残っています。続きから再開しますか？</p>
+      <div class="resume-actions">
+        <button type="button" id="btn-resume-yes" class="btn btn-primary">続きから再開</button>
+        <button type="button" id="btn-resume-no" class="btn btn-secondary">最初からやり直す</button>
+      </div>
+    </div>
+  </div>
+
   <!-- 過去の記録モーダル -->
   <div id="history-modal" class="modal-overlay" hidden>
     <div class="modal-content">

@@ -1118,6 +1118,91 @@ body {
   color: var(--color-text);
 }
 
+/* ─── 途中保存ボタン（ヘッダー） ─────────────────────────────────── */
+
+.btn-autosave-link {
+  margin-top: 8px;
+  margin-left: 8px;
+  padding: 6px 14px;
+  font-size: 0.8125rem;
+  font-family: 'M PLUS Rounded 1c', var(--font-sans);
+  color: var(--color-accent);
+  background: transparent;
+  border: 1px solid var(--color-accent);
+  border-radius: 20px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.btn-autosave-link:hover {
+  background: var(--color-accent);
+  color: #fff;
+}
+
+/* ─── 再開バナー ──────────────────────────────────────────────────── */
+
+.resume-banner {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 200;
+  background: var(--color-surface);
+  border-top: 2px solid var(--color-primary);
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.12);
+  display: none;
+}
+
+.resume-banner:not([hidden]) {
+  display: block;
+}
+
+.resume-banner-inner {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.resume-text {
+  flex: 1;
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  min-width: 200px;
+}
+
+.resume-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* ─── 自動保存インジケーター ──────────────────────────────────────── */
+
+.autosave-indicator {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  z-index: 150;
+  padding: 6px 14px;
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 20px;
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+
+.autosave-indicator.visible {
+  opacity: 1;
+}
+
 /* ─── Footer ──────────────────────────────────────────────────────── */
 
 .footer {
