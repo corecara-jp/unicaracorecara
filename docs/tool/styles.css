@@ -1203,6 +1203,67 @@ body {
   opacity: 1;
 }
 
+/* ─── 履歴: エージェント根拠表示 ─────────────────────────────────── */
+
+.history-agent-results {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border);
+}
+
+.history-agent-title {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  margin: 0 0 12px 0;
+}
+
+.history-option-block {
+  margin-bottom: 16px;
+  padding: 12px;
+  background: var(--color-bg);
+  border-radius: 6px;
+}
+
+.history-option-title {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0 0 6px 0;
+}
+
+.history-option-summary {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  margin: 0 0 10px 0;
+  line-height: 1.5;
+}
+
+.history-rationale-item {
+  margin-bottom: 8px;
+  padding: 8px 10px;
+  background: var(--color-surface);
+  border-radius: 4px;
+}
+
+.history-rationale-item p {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  margin: 4px 0 0 0;
+  line-height: 1.6;
+}
+
+.recommended-badge-sm {
+  display: inline-block;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: #fff;
+  background: var(--color-accent);
+  padding: 1px 6px;
+  border-radius: 3px;
+  vertical-align: middle;
+}
+
 /* ─── Footer ──────────────────────────────────────────────────────── */
 
 .footer {
