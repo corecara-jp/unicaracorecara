@@ -18,7 +18,8 @@
       scores: state.scores,
       reasons: state.reasons,
       improvements: state.improvements,
-      priority_order: state.priorityOrder
+      priority_order: state.priorityOrder,
+      agent_results: state.agentResults
     }]);
     return { data, error };
   }
@@ -185,7 +186,8 @@
     scores: {},        // area -> number 1-10
     reasons: {},       // area -> string（点数をつけた理由）
     improvements: {},  // area -> string（具体的な改善内容）
-    priorityOrder: []  // area[]（優先順位順、全6領域）
+    priorityOrder: [], // area[]（優先順位順、全6領域）
+    agentResults: null // AIエージェント分析結果（オプション配列からの根拠を保持）
   };
 
   function getEl(id) { return document.getElementById(id); }
@@ -558,7 +560,10 @@
           .replace(/転職[＋+＆&]UGS副業?/g, '転職＋副業')
           .replace(/現職[＋+＆&]UGS副業?/g, '現職＋副業')
           .replace(/UGS副業/g, '副業')
-          .replace(/UGS/g, '副業');
+          .replace(/UGS/g, '副業')
+          .replace(/FGS/g, '副業')
+          .replace(/FUG/g, '副業')
+          .replace(/UGS活動/g, '副業活動');
       }
       // 根拠テキストに改行を入れて読みやすくする（／で理想/現状を分割、→の前で改行）
       function formatRationale(s) {
@@ -569,7 +574,7 @@
       }
       const title = fixUGS(opt.title || opt.type || '');
       const rationaleHtml = (
-        '<div class="agent-rationale-grid">' +
+        '<div class="agent-rationale-list">' +
           '<div class="rationale-agent-item"><span class="agent-tag career">💼 キャリア戦略家</span><p>' + formatRationale(opt.rationale.career) + '</p></div>' +
           '<div class="rationale-agent-item"><span class="agent-tag life">🏠 ライフ設計士</span><p>' + formatRationale(opt.rationale.life) + '</p></div>' +
           '<div class="rationale-agent-item"><span class="agent-tag income">💰 収入アナリスト</span><p>' + formatRationale(opt.rationale.income) + '</p></div>' +
@@ -580,10 +585,10 @@
         '<div class="option-card' + (isRec ? ' option-card-recommended' : '') + '">' +
           (isRec ? '<div class="recommended-badge">推奨</div>' : '') +
           '<h3 class="option-card-title">' + escapeHtml(title) + '</h3>' +
-          '<p class="option-summary">' + escapeHtml(opt.summary || '') + '</p>' +
+          '<p class="option-summary">' + escapeHtml(fixUGS(opt.summary || '')) + '</p>' +
           '<div class="option-card-rationale">' +
-            '<div class="option-card-rationale-title">4人のエージェントからの根拠</div>' +
-            rationaleHtml +
+            '<button type="button" class="rationale-toggle-btn">4人のエージェントからの根拠を見る ▼</button>' +
+            '<div class="rationale-detail" style="display:none">' + rationaleHtml + '</div>' +
           '</div>' +
           '<div class="option-footer">' +
             '<div class="option-next-action"><span class="footer-label">今すぐできる一歩</span>' + escapeHtml(opt.nextAction || '') + '</div>' +
@@ -596,6 +601,18 @@
     }).join('');
 
     container.innerHTML = optionsHtml;
+
+    // 根拠トグルのイベントリスナーを設定
+    container.querySelectorAll('.rationale-toggle-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        const detail = btn.nextElementSibling;
+        if (detail) {
+          const isHidden = detail.style.display === 'none' || detail.style.display === '';
+          detail.style.display = isHidden ? 'block' : 'none';
+          btn.textContent = isHidden ? '4人のエージェントからの根拠を閉じる ▲' : '4人のエージェントからの根拠を見る ▼';
+        }
+      });
+    });
   }
 
   async function runAgentAnalysis() {
@@ -623,6 +640,7 @@
           }
         }
       });
+      state.agentResults = result;
       renderAgentResults(result);
     } catch (err) {
       const container = getEl('option-cards');
@@ -666,6 +684,29 @@
         );
       }).join('');
 
+      // エージェント根拠を表示
+      var agentHtml = '';
+      var ar = s.agent_results;
+      if (ar && ar.options && ar.options.length > 0) {
+        agentHtml = '<div class="history-agent-results">' +
+          '<h4 class="history-agent-title">AIエージェント分析結果</h4>' +
+          ar.options.map(function (opt) {
+            var title = opt.title || opt.type || '';
+            var rat = opt.rationale || {};
+            var agentItems = '';
+            if (rat.career) agentItems += '<div class="history-rationale-item"><span class="agent-tag career">💼 キャリア戦略家</span><p>' + escapeHtml(rat.career) + '</p></div>';
+            if (rat.life) agentItems += '<div class="history-rationale-item"><span class="agent-tag life">🏠 ライフ設計士</span><p>' + escapeHtml(rat.life) + '</p></div>';
+            if (rat.income) agentItems += '<div class="history-rationale-item"><span class="agent-tag income">💰 収入アナリスト</span><p>' + escapeHtml(rat.income) + '</p></div>';
+            if (rat.psychology) agentItems += '<div class="history-rationale-item"><span class="agent-tag psych">🧠 心理分析官</span><p>' + escapeHtml(rat.psychology) + '</p></div>';
+            return '<div class="history-option-block">' +
+              '<h5 class="history-option-title">' + escapeHtml(title) + (opt.recommended ? ' <span class="recommended-badge-sm">推奨</span>' : '') + '</h5>' +
+              (opt.summary ? '<p class="history-option-summary">' + escapeHtml(opt.summary) + '</p>' : '') +
+              agentItems +
+            '</div>';
+          }).join('') +
+        '</div>';
+      }
+
       return (
         '<div class="history-item">' +
           '<div class="history-item-header">' +
@@ -674,7 +715,7 @@
           '</div>' +
           '<div class="history-item-summary">' + summaryItems + '</div>' +
           '<button type="button" class="history-toggle">詳細を見る ▼</button>' +
-          '<div class="history-item-detail" style="display:none">' + detailRows + '</div>' +
+          '<div class="history-item-detail" style="display:none">' + detailRows + agentHtml + '</div>' +
         '</div>'
       );
     }).join('');
