@@ -1,17 +1,17 @@
 (function () {
   'use strict';
 
-  // ─── Supabase 設定 ────────────────────────────────────────────────────────
-  const SUPABASE_URL = 'https://xtcopreojvmovdswhhgk.supabase.co';
-  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0Y29wcmVvanZtb3Zkc3doaGdrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3MjkzMjQsImV4cCI6MjA4OTMwNTMyNH0.l_ylqxCQ9LJDdPEBd_pbzjzk4N9v6hovqP2MOn1cGMQ';
-  let db;
+  // ─── Supabase ─────────────────────────────────────────────────────────────
+  var SUPABASE_URL = 'https://xtcopreojvmovdswhhgk.supabase.co';
+  var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0Y29wcmVvanZtb3Zkc3doaGdrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3MjkzMjQsImV4cCI6MjA4OTMwNTMyNH0.l_ylqxCQ9LJDdPEBd_pbzjzk4N9v6hovqP2MOn1cGMQ';
+  var db;
   if (window.supabase) {
     db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
   }
 
   async function saveSession(name, email) {
     if (!db) return { error: 'Supabase が読み込まれていません' };
-    const { data, error } = await db.from('sessions').insert([{
+    var { data, error } = await db.from('sessions').insert([{
       user_name: name.trim(),
       user_email: email.trim().toLowerCase(),
       ideals: state.ideals,
@@ -21,382 +21,300 @@
       priority_order: state.priorityOrder,
       agent_results: state.agentResults
     }]);
-    return { data, error };
+    return { data: data, error: error };
   }
 
   async function loadSessions(email) {
     if (!db) return { data: null, error: 'Supabase が読み込まれていません' };
-    const { data, error } = await db
+    var { data, error } = await db
       .from('sessions')
       .select('*')
       .eq('user_email', email.trim().toLowerCase())
       .order('created_at', { ascending: false });
-    return { data, error };
+    return { data: data, error: error };
   }
 
-  const AREAS = ['収入', '働き方', '職場環境', '仕事内容', 'スキル', '生活'];
+  // ─── Constants ────────────────────────────────────────────────────────────
+  var AREAS = ['収入', '働き方', '職場環境', '仕事内容', 'スキル', '生活'];
 
-  const IMPROVEMENT_PLACEHOLDERS = {
-    '収入':    '例：月収を○万円 → ○万円に上げる　／　副業で月○万円を稼ぐ　／　年収○○○万円を目標にする',
-    '働き方':  '例：フルリモート勤務に変える　／　月の残業を○時間 → 0時間にする　／　週4日勤務にする',
-    '職場環境': '例：評価制度が公平な職場に移る　／　尊重し合えるチームで働く　／　上司との関係を改善する',
-    '仕事内容': '例：企画・提案の仕事を50%以上にする　／　○○の専門職になる　／　マネジメントから外れる',
-    'スキル':  '例：○○の資格を取る　／　副業で案件を○件獲得し実績を作る　／　○○ができるレベルになる',
-    '生活':    '例：毎日○時に退勤できる　／　家族と夕食を週○日一緒に食べる　／　休日に仕事を持ち込まない'
-  };
-
-  const REASON_PLACEHOLDERS = {
-    '収入':    '例：昇給がほぼなく、5年で年収がほとんど変わっていない',
-    '働き方':  '例：月40時間の残業があり、帰宅後に自分の時間がほとんどない',
-    '職場環境': '例：上司との関係が良くなく、毎朝会社に行くのが憂鬱',
-    '仕事内容': '例：ルーティン業務ばかりで、自分の裁量やアイデアを出せない',
-    'スキル':  '例：今の仕事だけでは市場価値が上がっている実感がない',
-    '生活':    '例：残業で家族との夕食をほとんど一緒に食べられていない'
-  };
-
-  // 選択肢ごと×領域ごとの具体的な根拠テキスト（ユーザーの改善テキストを使用）
-  const AREA_OPTION_TEXTS = {
-    '収入': {
-      1: function(imp) {
-        return (imp ? '「' + imp + '」を目指す場合、' : '収入目標に向けて、') +
-          '転職で年収レンジを引き上げながら、会社員のまま月5〜30万円を稼ぐ副業を並走させる両輪戦略が最も確実です。さらに節税の仕組みを整えることで、月3〜10万円の手残り増加も同時に狙えます。あなたの場合、具体的にどんな副業の組み合わせが合っているか、気になりませんか？';
-      },
-      2: function(imp) {
-        return (imp ? '「' + imp + '」を実現するには、' : '収入アップには、') +
-          '転職市場での年収交渉が直接的なアプローチです。業界・職種・企業規模の見直しが収入レンジを変える最大の変数です。転職エージェントへの登録で自分の市場価値を確認し、希望年収を明確にして選考に臨みましょう。';
-      },
-      3: function(imp) {
-        return (imp ? '「' + imp + '」のうち、' : '収入アップのため、') +
-          '現職を続けながら副業で収入を積み上げる方法が最短ルートです。専門家のサポートのもとで月5〜30万円の副業収入を設計しながら、節税で手残りも増やす二重の収入改善が狙えます。まず月5万円の目標から設計しましょう。';
-      },
-      4: function(imp) {
-        return (imp ? '「' + imp + '」に向けて、' : '収入改善に向けて、') +
-          'まず現職での改善余地を確認しましょう。昇給交渉・等級の見直し・インセンティブ制度の活用・残業代の正確な把握など、転職前に試せることが意外とあります。評価者に「何をすれば昇給できるか」を直接確認することが最初の一歩です。';
-      }
-    },
-    '働き方': {
-      1: function(imp) {
-        return (imp ? '「' + imp + '」を実現するには、' : '働き方を変えるには、') +
-          '転職先の働き方条件（リモート・フレックス・残業実態）を選考軸に入れつつ、副業で時間・場所の自由度を高める組み合わせが有効です。週数時間からスタートできる副業で、本業とは別の自律的な働き方を小さく試せます。あなたにとって「理想の時間の使い方」を実現する方法、実は思ったよりシンプルかもしれません。';
-      },
-      2: function(imp) {
-        return (imp ? '「' + imp + '」を転職条件に入れることが、' : '転職の条件に働き方を入れることが、') +
-          '最短の改善ルートです。求人票だけでなく、面接で実態（残業平均・リモート頻度・有休取得率）を必ず確認しましょう。現職と比較できる数字をもって判断することが大切です。';
-      },
-      3: function(imp) {
-        return (imp ? '「' + imp + '」と並行して、' : '働き方の自由度を上げるために、') +
-          '副業で自分の裁量で動ける時間を持つことが有効です。稼働時間・場所・案件を自分でコントロールできるため、現職を続けながら理想の働き方を小さく試す場にもなります。';
-      },
-      4: function(imp) {
-        return (imp ? '「' + imp + '」に向けて、' : '働き方の改善に向けて、') +
-          '現職でリモート勤務・フレックス・残業削減を上司や人事に交渉することから始めましょう。制度があるのに周知されていないケースも多く、申請するだけで変わることがあります。';
-      }
-    },
-    '職場環境': {
-      1: function(imp) {
-        return (imp ? '「' + imp + '」を目指すなら、' : '職場環境を変えるには、') +
-          '転職で環境を一新しつつ、副業で全く別のコミュニティ・評価環境に触れることで、比較軸が生まれ次の選択がしやすくなります。同じ目標を持つ仲間や専属サポーターとのつながりが、現職以外の心理的な拠り所にもなります。「こういう環境で働きたい」という基準、副業を通じて具体的に見えてくるかもしれません。';
-      },
-      2: function(imp) {
-        return (imp ? '「' + imp + '」を実現するには、' : '職場環境の改善には、') +
-          '転職で職場そのものを変えることが最も直接的です。面接での逆質問（チームの雰囲気・評価制度・離職率・マネジメントスタイル）で実態を見極めることが、ミスマッチを防ぐ鍵です。';
-      },
-      3: function(imp) {
-        return (imp ? '「' + imp + '」と並行して、' : '現職の環境とは別に、') +
-          '副業コミュニティで自分が快適に活動できる人間関係に触れることで、「こういう環境がいい」という基準が具体的になります。次の転職先選びの判断軸にもなります。';
-      },
-      4: function(imp) {
-        return (imp ? '「' + imp + '」に向けて、' : '職場環境の改善に向けて、') +
-          '異動希望・上司への直接相談・社内コミュニティへの参加など、環境を変えずに関係性を変えるアプローチから試しましょう。問題の原因が特定の人物や部署にある場合は、異動申請が有効なケースがあります。';
-      }
-    },
-    '仕事内容': {
-      1: function(imp) {
-        return (imp ? '「' + imp + '」を目指す場合、' : '仕事内容を変えるには、') +
-          '転職で職種・業務内容を刷新しつつ、副業で自分の裁量でやりたい仕事に挑戦する組み合わせが有効です。本業で経験を積み、副業で「人の人生に関わる仕事」を実践するサイクルが成長と市場価値を加速させます。あなたの経験とスキルで、どんな副業の仕事ができるか、具体的に聞いてみませんか？';
-      },
-      2: function(imp) {
-        return (imp ? '「' + imp + '」を条件に加えた転職が、' : '仕事内容の転換には、') +
-          '直接的なアプローチです。職種・業界・役割・裁量の大きさを整理し、やりたい仕事に近い求人を軸に選考を進めましょう。職種変更を伴う場合は、現職での実績を棚卸しして強みを整理することが重要です。';
-      },
-      3: function(imp) {
-        return (imp ? '「' + imp + '」に挑戦するために、' : '仕事内容の多様化のために、') +
-          '副業で本業とは全く別の「人の人生に関わる仕事」に挑戦できます。スモールスタートで適性と需要を確認しながら、コミュニケーション・金融・ライフプランのスキルが実践で身につきます。';
-      },
-      4: function(imp) {
-        return (imp ? '「' + imp + '」に向けて、' : '仕事内容の見直しに向けて、') +
-          '社内で担当範囲の変更・新プロジェクトへの参加・役割交渉を試みましょう。希望する業務内容を上司に伝え、機会を作ることから始めることで、転職前に試せることが見えてきます。';
-      }
-    },
-    'スキル': {
-      1: function(imp) {
-        return (imp ? '「' + imp + '」を達成するには、' : 'スキルを伸ばすには、') +
-          '転職で実務経験を積める環境に移りつつ、副業でそのスキルを外部で試す組み合わせが市場価値を最も高めます。「対人折衝能力・マネーリテラシー・投資判断」というAI時代に代替不可能なスキルが、副業の実践を通じて身につきます。今のあなたのスキルで、副業としてどこまでできるか、一度確かめてみませんか？';
-      },
-      2: function(imp) {
-        return (imp ? '「' + imp + '」のために、' : 'スキルアップのために、') +
-          '転職で成長できる環境・役割・職種を選ぶことが重要です。スキルが伸びる職場かどうか、入社前にチームの業務難易度・育成方針・挑戦できる案件の有無を確認しましょう。';
-      },
-      3: function(imp) {
-        return (imp ? '「' + imp + '」に向けて、' : 'スキルの実践のために、') +
-          '副業でスキルに対して報酬をもらう経験が市場価値を飛躍的に高めます。動画学習と専属サポーターによる実践支援で、再現性ある「稼ぐスキル」を最短で構築できます。';
-      },
-      4: function(imp) {
-        return (imp ? '「' + imp + '」に向けて、' : 'スキル向上に向けて、') +
-          '社内研修・異動・担当範囲の拡大など、現職のまま経験できることを整理しましょう。社内でどんな学習機会があるか（勉強会・資格補助・OJT）を確認することが出発点です。';
-      }
-    },
-    '生活': {
-      1: function(imp) {
-        return (imp ? '「' + imp + '」を実現するには、' : '理想の生活を実現するには、') +
-          '転職で働き方・勤務地・拘束時間を変えつつ、副業で収入の柔軟性を持つ組み合わせが、生活設計の自由度を最も高めます。節税の仕組みで手残りを増やしながら長期的な資産形成も並走できます。あなたが描く理想の生活、副業収入があれば現実的にどのくらい近づけるか、試算してみませんか？';
-      },
-      2: function(imp) {
-        return (imp ? '「' + imp + '」を実現するには、' : '理想の生活を実現するには、') +
-          '転職で勤務地・労働時間・働き方を変えることが直接的なアプローチです。家族との時間・健康・生活リズムを転職条件の優先軸として、妥協しない姿勢で求人を選びましょう。';
-      },
-      3: function(imp) {
-        return (imp ? '「' + imp + '」のために、' : '生活の質を高めるために、') +
-          '副業で収入に余白を作ることで、生活の選択肢が広がります。月5〜30万円の収入柱を作れば現職への依存度が下がり、無理に残業する必要がなくなります。節税効果で手残りも月3〜10万円増える可能性があります。';
-      },
-      4: function(imp) {
-        return (imp ? '「' + imp + '」に向けて、' : '生活改善に向けて、') +
-          'まず現職での働き方を見直しましょう。有給取得促進・残業削減交渉・在宅勤務の活用など、転職なしで生活の質を上げられることがあります。小さな変化から始めることが重要です。';
-      }
-    }
-  };
-
-  const OPTIONS = [
-    { id: 1, name: '① 転職＋副業', recommended: true },
-    { id: 2, name: '② 転職', recommended: false },
-    { id: 3, name: '③ 副業から始める', recommended: false },
-    { id: 4, name: '④ 現状の見直し', recommended: false }
+  var DOMAINS = [
+    { id: 'income', name: '収入', en: 'Income', glyph: '収', placeholder: '例：手取り月35万円。賞与年2回。生活費に余裕があり、年100万円を貯蓄に回せている。' },
+    { id: 'work_style', name: '働き方', en: 'Work Style', glyph: '働', placeholder: '例：週3〜4日リモート。残業は月20時間以内。有休が取りやすく、家族との時間が確保できる。' },
+    { id: 'environment', name: '職場環境', en: 'Environment', glyph: '環', placeholder: '例：尊敬できる上司・同僚と心理的安全性のある関係。フィードバックが率直に交わせる。' },
+    { id: 'content', name: '仕事内容', en: 'Content', glyph: '事', placeholder: '例：自分の強みが活きる企画系の仕事。裁量があり、社会的にも意義を感じられるテーマ。' },
+    { id: 'skill', name: 'スキル', en: 'Skill', glyph: '技', placeholder: '例：データ分析と顧客理解で社外でも通用するレベル。年1回は学びの機会に投資できる。' },
+    { id: 'life', name: '生活', en: 'Life', glyph: '活', placeholder: '例：朝7時起き・夜23時就寝のリズム。週2で運動、月1で家族旅行ができている。' },
   ];
 
-  const OPTION_META = {
-    1: { reach: '収入・スキル・働き方・生活など広く', risk: '高（環境変化＋時間・体力）', time: '数ヶ月〜1年', next: '転職軸の整理と副業の収入設計を並行してスタート' },
-    2: { reach: '収入・働き方・職場環境・仕事内容など', risk: '高（環境が変わる）', time: '数ヶ月〜1年', next: '判断軸の整理 → 求人検討' },
-    3: { reach: '収入・スキル・生活・マネーリテラシーなど', risk: '低〜中（現職維持のまま）', time: '3ヶ月〜', next: 'まず副業で月5万円の収入を作ることを目標にスタート' },
-    4: { reach: '職場環境・働き方・仕事内容など', risk: '低（現状維持の延長）', time: '継続的', next: '現職で交渉・調整できることの洗い出し' }
+  var REASON_PLACEHOLDERS = {
+    '収入': '例：月収30万で毎月の余力が2万円しかない。旅行も自己投資もできず、このままで大丈夫か不安',
+    '働き方': '例：残業月40時間で副業や勉強の時間がゼロ。収入の柱が給料だけで将来が不安',
+    '職場環境': '例：評価が不透明で昇給の見込みが立たない。このまま居続けて経済的に大丈夫か不安',
+    '仕事内容': '例：やりがいはないが転職して年収が下がるのが怖い。今の収入で生活が回るのかわからない',
+    'スキル': '例：今のスキルで10年後も同じ年収を維持できるか不安。市場価値を上げないと収入が先細りしそう',
+    '生活': '例：家賃と生活費で手取りの9割が消える。貯金が月1万円で結婚・子育ての資金計画が立たない',
   };
 
-  let state = {
+  var IMPROVEMENT_PLACEHOLDERS = {
+    '収入':    '例：月収を○万円 → ○万円に上げる / 副業で月○万円を稼ぐ',
+    '働き方':  '例：フルリモート勤務に変える / 月の残業を○時間 → 0時間にする',
+    '職場環境': '例：評価制度が公平な職場に移る / 尊重し合えるチームで働く',
+    '仕事内容': '例：企画・提案の仕事を50%以上にする / ○○の専門職になる',
+    'スキル':  '例：○○の資格を取る / 副業で案件を○件獲得し実績を作る',
+    '生活':    '例：毎日○時に退勤できる / 家族と夕食を週○日一緒に食べる'
+  };
+
+  var RECOMMENDED_OPTION = {
+    tag: '推奨',
+    routeCode: 'ROUTE 01',
+    title: '転職+副業で人生の最大化と生活の安定化',
+    subtitle: '「収入」と「働き方」を同時に動かす、最もレバレッジの効く道。',
+    hero: {
+      label: 'CASE STUDY',
+      name: '野々垣さん（これから。ロールモデル）',
+      quote: '本業と副業のかけ算が、人生の選択肢を広げてくれた。',
+      stats: [
+        { k: '本業年収', v: '600万 → 820万' },
+        { k: '副業月商', v: '0 → 18万' },
+        { k: '所要期間', v: '14ヶ月' },
+      ],
+    },
+    sections: [
+      { h: '今後12ヶ月で本業の収入を着実に伸ばす', body: '実績の棚卸し → 職務経歴書の言語化 → エージェント2社と並行で月1社ペースの面談。「年収+150万・残業30h以内」を交渉ラインに置きます。' },
+      { h: '同時並行で副業を「コトを動かす経験」として育てる', body: '週6〜8時間の副業時間を確保。最初の3ヶ月は知人案件で月3〜5万円、半年で月10万円規模の継続案件を持つ状態を目指します。' },
+      { h: '月20万円の副業収入を作る', body: '本業の信用を担保にしつつ、リスクを取らずに「もう一つの食い扶持」を持つ。心理的な余裕がさらに大きな決断を可能にします。' },
+      { h: '本業と副業、どちらに「振り切る」かを判断する', body: '12ヶ月後の数字と手触りで「副業を法人化する／転職先で全力」を選び直す。決め打ちではなく、選択肢を増やしてから選ぶ戦略です。' },
+    ],
+  };
+
+  var SAMPLE_OPTIONS = [
+    { routeCode: 'ROUTE 02', tag: '安定志向', title: '現職+副業で人生の充実化と生活の安定化', body: '転職リスクを取らずに、副業で「収入」と「仕事内容」のギャップを埋める。本業の安定を活かしながら、新しい経験値を蓄積。', chips: ['低リスク', '6〜12ヶ月', '蓄積型'], fit: { match: '安定志向の方に', shadow: 'スキル更新が遅れがち' } },
+    { routeCode: 'ROUTE 03', tag: 'スキル投資', title: '転職のみで年収・働き方の改善', body: '副業に手を広げず、本業で勝負を決める。職務経歴書とポートフォリオを磨き、年収・働き方の両方をワンステップで動かす。', chips: ['中リスク', '6〜12ヶ月', '集中型'], fit: { match: 'シンプルに進めたい方に', shadow: '時間と気力の集中投下が必要' } },
+    { routeCode: 'ROUTE 04', tag: '現状最適', title: '現状の見直しから、まず動き出す', body: '今の職場で「働き方」「環境」の交渉余地を探る。1on1の運用を変える・業務範囲を再定義するなど、今いる場所を整えてから次を考える。', chips: ['超低リスク', '3ヶ月', '内省型'], fit: { match: 'まず行動の手触りから', shadow: '抜本的な変化は期待しにくい' } },
+  ];
+
+  // ─── State ────────────────────────────────────────────────────────────────
+  var state = {
+    view: 'landing',  // 'landing' | 'tool'
     step: 1,
-    ideals: {},        // area -> string（理想の記述）
-    scores: {},        // area -> number 1-10
-    reasons: {},       // area -> string（点数をつけた理由）
-    improvements: {},  // area -> string（具体的な改善内容）
-    priorityOrder: [], // area[]（優先順位順、全6領域）
-    agentResults: null // AIエージェント分析結果
+    ideals: {},
+    scores: {},
+    reasons: {},
+    improvements: {},
+    priorityOrder: [],
+    agentResults: null,
   };
 
-  var LOCAL_STORAGE_KEY = 'corecara_draft';
-  var autosaveTimer = null;
+  // Helper to find DOMAIN by area name
+  function domainByName(name) {
+    for (var i = 0; i < DOMAINS.length; i++) {
+      if (DOMAINS[i].name === name) return DOMAINS[i];
+    }
+    return null;
+  }
 
   function getEl(id) { return document.getElementById(id); }
   function escapeHtml(s) {
-    const div = document.createElement('div');
+    var div = document.createElement('div');
     div.textContent = s;
     return div.innerHTML;
   }
 
-  // ─── localStorage 自動保存・復元 ────────────────────────────────────
-
-  function collectCurrentInputs() {
-    // 現在表示中のステップに応じて入力値を収集
-    if (state.step === 1) collectStep1();
-    else if (state.step === 2) collectStep2();
-    else if (state.step === 3) collectImprovements();
+  // ─── View switching ───────────────────────────────────────────────────────
+  function showLanding() {
+    state.view = 'landing';
+    getEl('landing').classList.remove('hidden');
+    getEl('app').classList.add('hidden');
   }
 
-  function saveToLocal() {
-    collectCurrentInputs();
-    var draft = {
-      step: state.step,
-      ideals: state.ideals,
-      scores: state.scores,
-      reasons: state.reasons,
-      improvements: state.improvements,
-      priorityOrder: state.priorityOrder,
-      savedAt: new Date().toISOString()
-    };
-    try {
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(draft));
-    } catch (e) { /* ignore quota errors */ }
-    showAutosaveIndicator();
+  function showTool() {
+    state.view = 'tool';
+    getEl('landing').classList.add('hidden');
+    getEl('app').classList.remove('hidden');
   }
 
-  function loadFromLocal() {
-    try {
-      var raw = localStorage.getItem(LOCAL_STORAGE_KEY);
-      if (!raw) return null;
-      return JSON.parse(raw);
-    } catch (e) { return null; }
-  }
-
-  function clearLocal() {
-    try { localStorage.removeItem(LOCAL_STORAGE_KEY); } catch (e) {}
-  }
-
-  function restoreFromDraft(draft) {
-    state.step = draft.step || 1;
-    state.ideals = draft.ideals || {};
-    state.scores = draft.scores || {};
-    state.reasons = draft.reasons || {};
-    state.improvements = draft.improvements || {};
-    state.priorityOrder = draft.priorityOrder || [];
-
-    renderStep1();
-    if (state.step >= 2) renderStep2();
-    if (state.step >= 3) renderStep3();
-    setStep(state.step);
-  }
-
-  function scheduleAutosave() {
-    if (autosaveTimer) clearTimeout(autosaveTimer);
-    autosaveTimer = setTimeout(saveToLocal, 1000);
-  }
-
-  function showAutosaveIndicator() {
-    var el = getEl('autosave-indicator');
-    if (!el) return;
-    el.classList.add('visible');
-    setTimeout(function () { el.classList.remove('visible'); }, 1500);
-  }
-
-  // グローバルinputイベントで自動保存をトリガー
-  document.addEventListener('input', function (e) {
-    if (e.target.closest('.container')) {
-      scheduleAutosave();
+  // ─── Step navigation ──────────────────────────────────────────────────────
+  function setStep(step) {
+    state.step = step;
+    // Panels
+    document.querySelectorAll('.panel').forEach(function (p) { p.classList.remove('active'); });
+    var panel = getEl('panel-step' + step);
+    if (panel) {
+      panel.classList.add('active');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-  });
+    // Sidebar nav
+    document.querySelectorAll('.step-item').forEach(function (el) {
+      var s = parseInt(el.getAttribute('data-step'), 10);
+      el.classList.remove('active', 'done');
+      if (s === step) el.classList.add('active');
+      else if (s < step) el.classList.add('done');
+    });
+    // Update step-num text for done steps
+    document.querySelectorAll('.step-item').forEach(function (el) {
+      var s = parseInt(el.getAttribute('data-step'), 10);
+      var numEl = el.querySelector('.step-num');
+      if (el.classList.contains('done')) {
+        numEl.textContent = '\u2713'; // checkmark
+      } else {
+        numEl.textContent = s;
+      }
+    });
+  }
 
-  // ─── Step 1: 理想の状態を記述 ──────────────────────────────────────────
-
-  const IDEAL_PLACEHOLDERS = {
-    '収入':    '例：月収60万円で、家族が安心して暮らせる収入がある',
-    '働き方':  '例：週4日リモート、残業なしで子育てと両立できている',
-    '職場環境': '例：互いに尊重し合え、成長を応援してくれるチームにいる',
-    '仕事内容': '例：自分の得意なことを活かせる仕事で、やりがいを感じている',
-    'スキル':  '例：市場価値のあるスキルがあり、どこでも働ける自信がある',
-    '生活':    '例：家族との時間を大切にし、健康で充実した毎日を送っている'
-  };
-
+  // ─── Step 1: 理想を決める ──────────────────────────────────────────────────
   function renderStep1() {
-    const form = getEl('form-step1');
-    if (!form) return;
+    var container = getEl('domain-list');
+    if (!container) return;
 
-    form.innerHTML = AREAS.map(function (area, i) {
+    container.innerHTML = AREAS.map(function (area, i) {
+      var d = domainByName(area);
       return (
-        '<div class="area-block" data-area="' + area + '">' +
-          '<div class="area-label">' +
-            '<span class="area-name">' + area + '</span>' +
-            '<span class="area-hint">この状態 ＝ 10点満点</span>' +
+        '<div class="domain-row" data-area="' + area + '">' +
+          '<div class="domain-icon">' + d.glyph + '</div>' +
+          '<div>' +
+            '<div class="domain-name">' + d.name + '</div>' +
+            '<div class="domain-name-sub">' + d.en + '</div>' +
           '</div>' +
-          '<textarea id="ideal-' + i + '" data-area="' + area + '" ' +
-            'placeholder="' + IDEAL_PLACEHOLDERS[area] + '" rows="2"></textarea>' +
+          '<textarea class="ideal-input" id="ideal-' + i + '" data-area="' + area + '" ' +
+            'placeholder="' + escapeHtml(d.placeholder) + '" rows="2"></textarea>' +
         '</div>'
       );
     }).join('');
 
+    // Restore values
     AREAS.forEach(function (area, i) {
-      const ta = getEl('ideal-' + i);
+      var ta = getEl('ideal-' + i);
       if (ta && state.ideals[area]) ta.value = state.ideals[area];
     });
 
-    form.querySelectorAll('textarea').forEach(function (ta) {
+    // Listen for input
+    container.querySelectorAll('.ideal-input').forEach(function (ta) {
       ta.addEventListener('input', checkStep1Complete);
     });
     checkStep1Complete();
   }
 
   function checkStep1Complete() {
-    const form = getEl('form-step1');
-    if (!form) return;
-    const allFilled = AREAS.every(function (area, i) {
-      const ta = form.querySelector('#ideal-' + i);
+    var allFilled = AREAS.every(function (area, i) {
+      var ta = getEl('ideal-' + i);
       return ta && ta.value.trim().length > 0;
     });
-    const btn = getEl('btn-to-step2');
+    var btn = getEl('btn-to-step2');
     if (btn) btn.disabled = !allFilled;
   }
 
   function collectStep1() {
-    const form = getEl('form-step1');
     AREAS.forEach(function (area, i) {
-      const ta = form && form.querySelector('#ideal-' + i);
+      var ta = getEl('ideal-' + i);
       state.ideals[area] = ta ? ta.value.trim() : '';
     });
   }
 
-  // ─── Step 2: 現状スコア + 理由 ─────────────────────────────────────────
-
+  // ─── Step 2: 現状スコア ──────────────────────────────────────────────────
   function renderStep2() {
-    const list = getEl('score-list');
+    var list = getEl('score-list');
     if (!list) return;
 
     list.innerHTML = AREAS.map(function (area, i) {
-      const idealText = state.ideals[area] || '—';
-      const savedScore = state.scores[area] || 5;
+      var idealText = state.ideals[area] || '';
+      var truncated = idealText.length > 24 ? idealText.slice(0, 24) + '...' : idealText;
+      var savedScore = state.scores[area] || 5;
+      var pct = (savedScore / 10) * 100;
+
       return (
-        '<div class="score-block" data-area="' + area + '">' +
-          '<div class="score-header">' +
-            '<span class="score-area-name">' + area + '</span>' +
+        '<div class="score-row-v2" data-area="' + area + '">' +
+          '<div class="score-row">' +
+            '<div class="score-label">' +
+              '<div class="score-name">' + area + '</div>' +
+              '<div class="score-ideal">理想：' + escapeHtml(truncated || '（未入力）') + '</div>' +
+            '</div>' +
+            '<div class="slider-wrap" id="slider-wrap-' + i + '">' +
+              '<div class="slider-track" id="slider-track-' + i + '">' +
+                '<div class="slider-fill" style="width:' + pct + '%"></div>' +
+                '<div class="slider-thumb" style="left:' + pct + '%"></div>' +
+              '</div>' +
+              '<div class="slider-ticks">' +
+                '<span>0</span><span>1</span><span>2</span><span>3</span><span>4</span>' +
+                '<span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span>' +
+              '</div>' +
+            '</div>' +
+            '<div class="score-value" id="score-value-' + i + '">' + savedScore + '<span class="score-value-of"> / 10</span></div>' +
           '</div>' +
-          '<div class="score-ideal-ref">' +
-            '<span class="ref-label">理想（10点）：</span>' +
-            '<span class="ref-text">' + escapeHtml(idealText) + '</span>' +
-          '</div>' +
-          '<div class="score-input-row">' +
-            '<span class="score-min-label">1点</span>' +
-            '<input type="range" id="score-' + i + '" data-area="' + area + '" ' +
-              'min="1" max="10" value="' + savedScore + '" class="score-slider">' +
-            '<span class="score-max-label">10点</span>' +
-            '<span class="score-display" id="score-display-' + i + '">' + savedScore + '点</span>' +
-          '</div>' +
-          '<div class="reason-row">' +
-            '<label class="reason-label" for="reason-' + i + '">この点数をつけた理由</label>' +
-            '<textarea id="reason-' + i + '" data-area="' + area + '" ' +
-              'placeholder="' + REASON_PLACEHOLDERS[area] + '" rows="2" class="reason-textarea"></textarea>' +
+          '<div class="reason-wrap">' +
+            '<div class="reason-label">なぜその点数？</div>' +
+            '<textarea class="reason-input" id="reason-' + i + '" data-area="' + area + '" ' +
+              'placeholder="' + escapeHtml(REASON_PLACEHOLDERS[area] || '') + '" rows="2"></textarea>' +
           '</div>' +
         '</div>'
       );
     }).join('');
 
+    // Restore reasons & init sliders
     AREAS.forEach(function (area, i) {
-      const slider = getEl('score-' + i);
-      const display = getEl('score-display-' + i);
-      if (slider && display) {
-        if (state.scores[area]) {
-          slider.value = state.scores[area];
-          display.textContent = state.scores[area] + '点';
-        }
-        slider.addEventListener('input', function () {
-          display.textContent = slider.value + '点';
-          state.scores[area] = parseInt(slider.value, 10);
-        });
-      }
-      const reasonTa = getEl('reason-' + i);
-      if (reasonTa && state.reasons[area]) {
-        reasonTa.value = state.reasons[area];
-      }
+      var reasonTa = getEl('reason-' + i);
+      if (reasonTa && state.reasons[area]) reasonTa.value = state.reasons[area];
+      initCustomSlider(i, area);
     });
+  }
+
+  function initCustomSlider(index, area) {
+    var track = getEl('slider-track-' + index);
+    var valueEl = getEl('score-value-' + index);
+    if (!track || !valueEl) return;
+
+    var fill = track.querySelector('.slider-fill');
+    var thumb = track.querySelector('.slider-thumb');
+    var dragging = false;
+
+    function updateFromX(clientX) {
+      var rect = track.getBoundingClientRect();
+      var ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+      var val = Math.round(ratio * 10);
+      var pct = (val / 10) * 100;
+      fill.style.width = pct + '%';
+      thumb.style.left = pct + '%';
+      valueEl.innerHTML = val + '<span class="score-value-of"> / 10</span>';
+      state.scores[area] = val;
+    }
+
+    function onMouseDown(e) {
+      e.preventDefault();
+      dragging = true;
+      thumb.classList.add('grabbing');
+      updateFromX(e.clientX || (e.touches && e.touches[0].clientX));
+    }
+
+    function onMouseMove(e) {
+      if (!dragging) return;
+      updateFromX(e.clientX || (e.touches && e.touches[0].clientX));
+    }
+
+    function onMouseUp() {
+      dragging = false;
+      thumb.classList.remove('grabbing');
+    }
+
+    track.addEventListener('mousedown', onMouseDown);
+    track.addEventListener('touchstart', function (e) { onMouseDown(e.touches[0]); }, { passive: false });
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('touchmove', function (e) { if (dragging) onMouseMove(e.touches[0]); });
+    window.addEventListener('mouseup', onMouseUp);
+    window.addEventListener('touchend', onMouseUp);
   }
 
   function collectStep2() {
     AREAS.forEach(function (area, i) {
-      const slider = getEl('score-' + i);
-      const reasonTa = getEl('reason-' + i);
-      state.scores[area] = slider ? parseInt(slider.value, 10) : 5;
+      var reasonTa = getEl('reason-' + i);
       state.reasons[area] = reasonTa ? reasonTa.value.trim() : '';
+      // scores already updated by slider
+      if (!state.scores[area]) state.scores[area] = 5;
     });
   }
 
-  // ─── Step 3: ギャップ確認 + 改善内容 + 優先順位 ────────────────────────
-
+  // ─── Step 3: ギャップ確認 ──────────────────────────────────────────────────
   function initPriorityOrder() {
     if (state.priorityOrder.length !== AREAS.length) {
-      // ギャップが大きい順にデフォルト設定
       state.priorityOrder = AREAS.slice().sort(function (a, b) {
         return (10 - (state.scores[b] || 5)) - (10 - (state.scores[a] || 5));
       });
@@ -405,349 +323,632 @@
 
   function renderStep3() {
     initPriorityOrder();
-    const list = getEl('gap-detail-list');
-    if (!list) return;
-    renderGapCards();
+    renderRadarChart();
+    renderBarChart();
+    renderImpList();
   }
 
-  function renderGapCards() {
-    const list = getEl('gap-detail-list');
+  function renderRadarChart() {
+    var svg = getEl('radar-svg');
+    if (!svg) return;
+
+    var size = 320;
+    var center = size / 2;
+    var radius = size * 0.38;
+    var n = AREAS.length;
+
+    function point(i, value) {
+      var angle = (Math.PI * 2 * i) / n - Math.PI / 2;
+      var r = (value / 10) * radius;
+      return [center + Math.cos(angle) * r, center + Math.sin(angle) * r];
+    }
+
+    function labelPoint(i) {
+      var angle = (Math.PI * 2 * i) / n - Math.PI / 2;
+      var r = radius + 22;
+      return [center + Math.cos(angle) * r, center + Math.sin(angle) * r];
+    }
+
+    var html = '';
+
+    // Grid rings
+    [2, 4, 6, 8, 10].forEach(function (v) {
+      var pts = AREAS.map(function (_, i) { return point(i, v).join(','); }).join(' ');
+      html += '<polygon points="' + pts + '" fill="none" stroke="var(--line)" stroke-width="1"/>';
+    });
+
+    // Spokes
+    AREAS.forEach(function (_, i) {
+      var p = point(i, 10);
+      html += '<line x1="' + center + '" y1="' + center + '" x2="' + p[0] + '" y2="' + p[1] + '" stroke="var(--line-soft)" stroke-width="1"/>';
+    });
+
+    // Ideal polygon
+    var idealPoly = AREAS.map(function (_, i) { return point(i, 10).join(','); }).join(' ');
+    html += '<polygon points="' + idealPoly + '" fill="var(--beige)" fill-opacity="0.35" stroke="var(--beige-deep)" stroke-width="1" stroke-dasharray="3 3"/>';
+
+    // Actual polygon
+    var actualPoly = AREAS.map(function (area, i) { return point(i, state.scores[area] || 5).join(','); }).join(' ');
+    html += '<polygon points="' + actualPoly + '" fill="var(--sage)" fill-opacity="0.35" stroke="var(--sage-deep)" stroke-width="2"/>';
+
+    // Actual points
+    AREAS.forEach(function (area, i) {
+      var p = point(i, state.scores[area] || 5);
+      html += '<circle cx="' + p[0] + '" cy="' + p[1] + '" r="4" fill="var(--sage-deep)"/>';
+    });
+
+    // Labels
+    AREAS.forEach(function (area, i) {
+      var p = labelPoint(i);
+      html += '<text x="' + p[0] + '" y="' + p[1] + '" text-anchor="middle" dominant-baseline="middle" font-size="12" font-family="var(--font-serif)" fill="var(--ink)">' + area + '</text>';
+    });
+
+    svg.innerHTML = html;
+  }
+
+  function renderBarChart() {
+    var card = getEl('bars-card');
+    if (!card) return;
+
+    var barsHtml = '<div class="radar-title">GAP DETAIL</div>';
+    AREAS.forEach(function (area) {
+      var s = state.scores[area] || 5;
+      var gap = 10 - s;
+      var pct = (s / 10) * 100;
+      barsHtml += (
+        '<div class="bar-row">' +
+          '<div class="bar-name">' + area + '</div>' +
+          '<div class="bar-track">' +
+            '<div class="bar-actual" style="width:' + pct + '%"></div>' +
+            '<div class="bar-ideal-mark" style="left:calc(100% - 2px)"></div>' +
+          '</div>' +
+          '<div class="bar-gap-text' + (gap === 0 ? ' small' : '') + '">' +
+            (gap === 0 ? '達成' : '-' + gap) +
+          '</div>' +
+        '</div>'
+      );
+    });
+    card.innerHTML = barsHtml;
+  }
+
+  // Drag and drop state
+  var dragId = null;
+  var dragOverId = null;
+
+  function renderImpList() {
+    var list = getEl('imp-list');
     if (!list) return;
 
-    list.innerHTML = state.priorityOrder.map(function (area, rankIndex) {
-      const score = state.scores[area] || 5;
-      const reason = state.reasons[area] || '';
-      const idealText = state.ideals[area] || '—';
-      const gap = 10 - score;
-      const savedImp = state.improvements[area] || '';
-
-      const isFirst = rankIndex === 0;
-      const isLast = rankIndex === state.priorityOrder.length - 1;
+    list.innerHTML = state.priorityOrder.map(function (area, idx) {
+      var d = domainByName(area);
+      var s = state.scores[area] || 5;
+      var gap = 10 - s;
+      var savedImp = state.improvements[area] || '';
 
       return (
-        '<div class="gap-detail-card" data-area="' + area + '" data-rank="' + rankIndex + '">' +
-          '<div class="gap-detail-header">' +
-            '<span class="rank-badge">第' + (rankIndex + 1) + '位</span>' +
-            '<span class="gap-area-name">' + area + '</span>' +
-            '<span class="gap-score-badge">現在 <strong>' + score + '点</strong>　ギャップ <strong>' + gap + '点</strong></span>' +
-            '<div class="rank-controls">' +
-              '<button type="button" class="rank-btn rank-up" data-area="' + area + '" ' + (isFirst ? 'disabled' : '') + '>↑</button>' +
-              '<button type="button" class="rank-btn rank-down" data-area="' + area + '" ' + (isLast ? 'disabled' : '') + '>↓</button>' +
-            '</div>' +
+        '<div class="imp-item" data-area="' + area + '" draggable="true">' +
+          '<div class="imp-handle" title="ドラッグして並び替え">::</div>' +
+          '<div class="imp-rank">' + (idx + 1) + '</div>' +
+          '<div class="imp-domain">' +
+            '<div class="imp-domain-name">' + area + '</div>' +
+            '<div class="imp-gap">' + (gap === 0 ? '達成' : 'ギャップ -' + gap) + '</div>' +
           '</div>' +
-          '<div class="gap-info-row">' +
-            '<div class="gap-info-item">' +
-              '<span class="gap-info-label">理想（10点）</span>' +
-              '<span class="gap-info-text">' + escapeHtml(idealText) + '</span>' +
-            '</div>' +
-            (reason ? (
-              '<div class="gap-info-item">' +
-                '<span class="gap-info-label">現在（' + score + '点）の理由</span>' +
-                '<span class="gap-info-text">' + escapeHtml(reason) + '</span>' +
-              '</div>'
-            ) : '') +
-          '</div>' +
-          '<div class="improvement-row">' +
-            '<label class="improvement-label" for="imp-' + area + '">具体的に何が改善されれば理想に近づきますか？<span class="label-hint">できるだけ数字で</span></label>' +
-            '<textarea id="imp-' + area + '" data-area="' + area + '" class="improvement-textarea" ' +
-              'placeholder="' + IMPROVEMENT_PLACEHOLDERS[area] + '" rows="2">' +
-            '</textarea>' +
+          '<textarea class="imp-text" id="imp-' + area + '" data-area="' + area + '" ' +
+            'placeholder="' + escapeHtml(IMPROVEMENT_PLACEHOLDERS[area] || (area + 'で、何が改善されれば理想に近づきますか？')) + '" rows="1">' +
+            escapeHtml(savedImp) +
+          '</textarea>' +
+          '<div class="imp-arrows">' +
+            '<button type="button" class="imp-up" data-area="' + area + '"' + (idx === 0 ? ' disabled' : '') + '>&#x2191;</button>' +
+            '<button type="button" class="imp-down" data-area="' + area + '"' + (idx === state.priorityOrder.length - 1 ? ' disabled' : '') + '>&#x2193;</button>' +
           '</div>' +
         '</div>'
       );
     }).join('');
 
-    // 改善内容を復元
-    state.priorityOrder.forEach(function (area) {
-      const ta = getEl('imp-' + area);
-      if (ta && state.improvements[area]) ta.value = state.improvements[area];
-    });
-
-    // 並び替えボタンのイベント
-    list.querySelectorAll('.rank-up').forEach(function (btn) {
+    // Arrow button events
+    list.querySelectorAll('.imp-up').forEach(function (btn) {
       btn.addEventListener('click', function () {
         collectImprovements();
-        const area = btn.dataset.area;
-        const idx = state.priorityOrder.indexOf(area);
+        var area = btn.getAttribute('data-area');
+        var idx = state.priorityOrder.indexOf(area);
         if (idx > 0) {
-          const tmp = state.priorityOrder[idx - 1];
+          var tmp = state.priorityOrder[idx - 1];
           state.priorityOrder[idx - 1] = state.priorityOrder[idx];
           state.priorityOrder[idx] = tmp;
-          renderGapCards();
+          renderImpList();
         }
       });
     });
 
-    list.querySelectorAll('.rank-down').forEach(function (btn) {
+    list.querySelectorAll('.imp-down').forEach(function (btn) {
       btn.addEventListener('click', function () {
         collectImprovements();
-        const area = btn.dataset.area;
-        const idx = state.priorityOrder.indexOf(area);
+        var area = btn.getAttribute('data-area');
+        var idx = state.priorityOrder.indexOf(area);
         if (idx < state.priorityOrder.length - 1) {
-          const tmp = state.priorityOrder[idx + 1];
+          var tmp = state.priorityOrder[idx + 1];
           state.priorityOrder[idx + 1] = state.priorityOrder[idx];
           state.priorityOrder[idx] = tmp;
-          renderGapCards();
+          renderImpList();
         }
       });
+    });
+
+    // Drag & drop events
+    list.querySelectorAll('.imp-item').forEach(function (item) {
+      item.addEventListener('dragstart', function (e) {
+        dragId = item.getAttribute('data-area');
+        e.dataTransfer.effectAllowed = 'move';
+        try { e.dataTransfer.setData('text/plain', dragId); } catch (_) {}
+        setTimeout(function () { item.classList.add('is-dragging'); }, 0);
+      });
+
+      item.addEventListener('dragover', function (e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        var overArea = item.getAttribute('data-area');
+        if (dragOverId !== overArea) {
+          // Remove old dragover styles
+          list.querySelectorAll('.imp-item').forEach(function (el) { el.classList.remove('is-over'); });
+          if (dragId !== overArea) {
+            item.classList.add('is-over');
+          }
+          dragOverId = overArea;
+        }
+      });
+
+      item.addEventListener('drop', function (e) {
+        e.preventDefault();
+        var targetArea = item.getAttribute('data-area');
+        if (!dragId || dragId === targetArea) {
+          cleanupDrag();
+          return;
+        }
+        collectImprovements();
+        var next = state.priorityOrder.filter(function (x) { return x !== dragId; });
+        var ti = next.indexOf(targetArea);
+        next.splice(ti, 0, dragId);
+        state.priorityOrder = next;
+        cleanupDrag();
+        renderImpList();
+      });
+
+      item.addEventListener('dragend', function () {
+        cleanupDrag();
+      });
+    });
+  }
+
+  function cleanupDrag() {
+    dragId = null;
+    dragOverId = null;
+    document.querySelectorAll('.imp-item').forEach(function (el) {
+      el.classList.remove('is-dragging', 'is-over');
     });
   }
 
   function collectImprovements() {
     state.priorityOrder.forEach(function (area) {
-      const ta = getEl('imp-' + area);
+      var ta = getEl('imp-' + area);
       state.improvements[area] = ta ? ta.value.trim() : '';
     });
   }
 
-  // ─── Step 4: 選択肢の提示 ──────────────────────────────────────────────
-
-  function renderStep4() {
-    const container = getEl('option-cards');
-    const bridgeEl = getEl('bridge-message');
-    if (!container) return;
-
-    const topAreas = state.priorityOrder.slice(0, 3);
-
-    // 共感の一文（優先度1）- AI分析中も表示
-    if (bridgeEl) {
-      const a1 = topAreas[0] || '';
-      const a2 = topAreas[1] || '';
-      const empathy = a1 && a2
-        ? 'あなたは今、' + a1 + ' と ' + a2 + ' を最優先に変えたいと感じています。'
-        : a1 ? 'あなたは今、' + a1 + ' を最優先に変えたいと感じています。' : '';
-      const areaLabels = topAreas.map(function (a, i) { return (i + 1) + '位：' + a; }).join('　');
-      bridgeEl.innerHTML =
-        (empathy ? '<strong class="empathy-line">' + escapeHtml(empathy) + '</strong><br>' : '') +
-        '<span class="priority-line">' + escapeHtml(areaLabels) + ' を優先改善する想定で分析します。</span>';
-    }
-
-    runAgentAnalysis();
+  // ─── Helpers for agent output ────────────────────────────────────────────
+  function fixUGS(s) {
+    return (s || '')
+      .replace(/転職[＋+＆&]UGS副業?/g, '転職＋副業')
+      .replace(/現職[＋+＆&]UGS副業?/g, '現職＋副業')
+      .replace(/UGS副業/g, '副業')
+      .replace(/UGS/g, '副業')
+      .replace(/FGS/g, '副業')
+      .replace(/FUG/g, '副業')
+      .replace(/UGS活動/g, '副業活動');
   }
 
-  // ─── Step 4: AIエージェント分析 ───────────────────────────────────────
-
-  function renderAgentLoading() {
-    const container = getEl('option-cards');
-    if (!container) return;
-    container.innerHTML = (
-      '<div class="agent-loading">' +
-        '<div class="agent-loading-title">4人のエージェントが並列分析中…</div>' +
-        '<div class="agent-progress-list">' +
-          '<div class="agent-progress-item" id="progress-career-strategist">' +
-            '<span class="agent-icon">💼</span><span class="agent-name">キャリア戦略家</span>' +
-            '<span class="agent-status loading">分析中…</span>' +
-          '</div>' +
-          '<div class="agent-progress-item" id="progress-life-planner">' +
-            '<span class="agent-icon">🏠</span><span class="agent-name">ライフ設計士</span>' +
-            '<span class="agent-status loading">分析中…</span>' +
-          '</div>' +
-          '<div class="agent-progress-item" id="progress-income-analyst">' +
-            '<span class="agent-icon">💰</span><span class="agent-name">収入アナリスト</span>' +
-            '<span class="agent-status loading">分析中…</span>' +
-          '</div>' +
-          '<div class="agent-progress-item" id="progress-psychology-coach">' +
-            '<span class="agent-icon">🧠</span><span class="agent-name">心理・動機分析官</span>' +
-            '<span class="agent-status loading">分析中…</span>' +
-          '</div>' +
-        '</div>' +
-        '<div class="agent-synthesizing" id="agent-synthesizing" hidden>' +
-          '<span class="synthesizing-dot"></span>シニアコンサルタントが統合分析中…' +
-        '</div>' +
-      '</div>'
-    );
+  function formatRationale(s) {
+    return escapeHtml(fixUGS(s))
+      .replace(/\s*[／/]\s*/g, '<br>')
+      .replace(/\s*→\s*/g, '<br>->')
+      .replace(/(<br>\s*){2,}/g, '<br>');
   }
 
-  function updateAgentProgress(agentType, success) {
-    const el = getEl('progress-' + agentType);
-    if (!el) return;
-    const status = el.querySelector('.agent-status');
-    if (status) {
-      status.textContent = success ? '完了 ✓' : 'エラー';
-      status.className = 'agent-status ' + (success ? 'done' : 'error');
-    }
-  }
-
-  function renderNogakiCaseStudy() {
+  function renderRationaleToggle(rationale, idx) {
+    if (!rationale) return '';
     return (
-      '<div class="case-study-card">' +
-        '<div class="case-study-header">' +
-          '<span class="case-study-badge">成功事例</span>' +
-          '<span class="case-study-name">野々垣さん（これから。ロールモデル）</span>' +
-        '</div>' +
-        '<div class="case-study-photo-wrap">' +
-          '<img src="nogaki.jpeg" alt="野々垣さん" class="case-study-photo">' +
-          '<div class="case-study-photo-caption">社会人5年目・グランドキャニオンにて</div>' +
-        '</div>' +
-        '<p class="case-study-lead">転職＋副業を組み合わせて、社会人5年目に年収2,000万円・海外生活を実現。</p>' +
-        '<div class="case-study-timeline">' +
-          '<div class="timeline-item">' +
-            '<span class="timeline-dot">1年目</span>' +
-            '<div class="timeline-body">' +
-              '<strong>年収290万円の過酷な職場で限界を感じる</strong>' +
-              '<p>朝7時〜深夜の激務。FPとの出会いで「人生の逆算」を行い、<em>時間を確保できる環境</em>への戦略的転職を決意。副業を夏から開始し、初月15万円を達成。</p>' +
-            '</div>' +
-          '</div>' +
-          '<div class="timeline-item">' +
-            '<span class="timeline-dot">2年目</span>' +
-            '<div class="timeline-body">' +
-              '<strong>顧客の課題を解決する「コトを売る」営業スキルを転職先で習得</strong>' +
-              '<p>副業と本業を並走。「なぜ断られたか」を徹底的に書き出し、改善を繰り返す。</p>' +
-            '</div>' +
-          '</div>' +
-          '<div class="timeline-item">' +
-            '<span class="timeline-dot">3年目</span>' +
-            '<div class="timeline-body">' +
-              '<strong>独立。月50万円の安定利益を達成</strong>' +
-              '<p>量をこなしながら成功者に教えを乞い、泥臭い積み上げで1年後に月利50万を安定化。</p>' +
-            '</div>' +
-          '</div>' +
-          '<div class="timeline-item">' +
-            '<span class="timeline-dot">4年目</span>' +
-            '<div class="timeline-body">' +
-              '<strong>年収1,200万円。組織として成長</strong>' +
-              '<p>同じ目標を持つ仲間と本気で向き合い、成功者を徹底的に模倣し続けた結果。</p>' +
-            '</div>' +
-          '</div>' +
-          '<div class="timeline-item timeline-item-last">' +
-            '<span class="timeline-dot">5年目</span>' +
-            '<div class="timeline-body">' +
-              '<strong>年収2,000万円超。2ヶ月に1回は海外へ</strong>' +
-              '<p>「自分一人でやった方が早い」というエゴを捨て、業務をマニュアル化して組織をスケール。仲間も同様のライフスタイルを実現。</p>' +
-            '</div>' +
+      '<div class="rationale-toggle-section">' +
+        '<button type="button" class="rationale-toggle-btn" data-rationale-idx="' + idx + '">' +
+          '4人のエージェントの根拠を見る' +
+          '<span class="rationale-toggle-arrow">&#x25BC;</span>' +
+        '</button>' +
+        '<div class="rationale-toggle-content">' +
+          '<div class="agent-rationale-list">' +
+            '<div class="rationale-agent-item"><span class="agent-tag career">キャリア戦略家</span><p>' + formatRationale(rationale.career) + '</p></div>' +
+            '<div class="rationale-agent-item"><span class="agent-tag life">ライフ設計士</span><p>' + formatRationale(rationale.life) + '</p></div>' +
+            '<div class="rationale-agent-item"><span class="agent-tag income">収入アナリスト</span><p>' + formatRationale(rationale.income) + '</p></div>' +
+            '<div class="rationale-agent-item"><span class="agent-tag psych">心理分析官</span><p>' + formatRationale(rationale.psychology) + '</p></div>' +
           '</div>' +
         '</div>' +
-        '<p class="case-study-cta">あなたも、<em>転職と副業の組み合わせ</em>でこの軌道を歩めます。まず一歩、話してみませんか？</p>' +
       '</div>'
     );
   }
 
-  function renderAgentResults(result) {
-    const container = getEl('option-cards');
-    if (!container || !result) return;
-
-    const optionsHtml = (result.options || []).map(function (opt) {
-      const isRec = opt.recommended;
-      // AIが "UGS副業" や "UGS" と出力する場合は "副業" に正規化
-      function fixUGS(s) {
-        return (s || '')
-          .replace(/転職[＋+＆&]UGS副業?/g, '転職＋副業')
-          .replace(/現職[＋+＆&]UGS副業?/g, '現職＋副業')
-          .replace(/UGS副業/g, '副業')
-          .replace(/UGS/g, '副業')
-          .replace(/FGS/g, '副業')
-          .replace(/FUG/g, '副業')
-          .replace(/UGS活動/g, '副業活動');
-      }
-      // 根拠テキストに改行を入れて読みやすくする（／で理想/現状を分割、→の前で改行）
-      function formatRationale(s) {
-        return escapeHtml(fixUGS(s))
-          .replace(/\s*[／/]\s*/g, '<br>')
-          .replace(/\s*→\s*/g, '<br>→')
-          .replace(/(<br>\s*){2,}/g, '<br>');
-      }
-      const title = fixUGS(opt.title || opt.type || '');
-      const rationaleHtml = (
-        '<div class="agent-rationale-list">' +
-          '<div class="rationale-agent-item"><span class="agent-tag career">💼 キャリア戦略家</span><p>' + formatRationale(opt.rationale.career) + '</p></div>' +
-          '<div class="rationale-agent-item"><span class="agent-tag life">🏠 ライフ設計士</span><p>' + formatRationale(opt.rationale.life) + '</p></div>' +
-          '<div class="rationale-agent-item"><span class="agent-tag income">💰 収入アナリスト</span><p>' + formatRationale(opt.rationale.income) + '</p></div>' +
-          '<div class="rationale-agent-item"><span class="agent-tag psych">🧠 心理分析官</span><p>' + formatRationale(opt.rationale.psychology) + '</p></div>' +
-        '</div>'
-      );
-      const card = (
-        '<div class="option-card' + (isRec ? ' option-card-recommended' : '') + '">' +
-          (isRec ? '<div class="recommended-badge">推奨</div>' : '') +
-          '<h3 class="option-card-title">' + escapeHtml(title) + '</h3>' +
-          '<p class="option-summary">' + escapeHtml(fixUGS(opt.summary || '')) + '</p>' +
-          '<div class="option-card-rationale">' +
-            '<button type="button" class="rationale-toggle-btn">4人のエージェントからの根拠を見る ▼</button>' +
-            '<div class="rationale-detail" style="display:none">' + rationaleHtml + '</div>' +
-          '</div>' +
-          '<div class="option-footer">' +
-            '<div class="option-next-action"><span class="footer-label">今すぐできる一歩</span>' + escapeHtml(opt.nextAction || '') + '</div>' +
-            '<div class="option-risk"><span class="footer-label">リスク</span>' + escapeHtml(opt.risk || '') + '</div>' +
-          '</div>' +
-        '</div>'
-      );
-      // 推奨カード（転職＋副業）の直後に成功事例を挿入
-      return card + (isRec ? renderNogakiCaseStudy() : '');
-    }).join('');
-
-    container.innerHTML = optionsHtml;
-
-    // 根拠トグルのイベントリスナーを設定
-    container.querySelectorAll('.rationale-toggle-btn').forEach(function (btn) {
+  function bindRationaleToggles() {
+    document.querySelectorAll('.rationale-toggle-btn').forEach(function (btn) {
+      if (btn.dataset.bound) return;
+      btn.dataset.bound = '1';
       btn.addEventListener('click', function () {
-        const detail = btn.nextElementSibling;
-        if (detail) {
-          const isHidden = detail.style.display === 'none' || detail.style.display === '';
-          detail.style.display = isHidden ? 'block' : 'none';
-          btn.textContent = isHidden ? '4人のエージェントからの根拠を閉じる ▲' : '4人のエージェントからの根拠を見る ▼';
-        }
+        var content = btn.nextElementSibling;
+        var arrow = btn.querySelector('.rationale-toggle-arrow');
+        if (content) content.classList.toggle('open');
+        if (arrow) arrow.classList.toggle('open');
       });
     });
   }
 
-  async function runAgentAnalysis() {
-    if (!window.CareerAgents) {
-      const container = getEl('option-cards');
-      if (container) container.innerHTML = '<p class="agent-error">エージェントの読み込みに失敗しました。ページを再読み込みしてください。</p>';
+  // ─── Step 4: 選択肢 ──────────────────────────────────────────────────────
+  function renderStep4() {
+    // If already analyzed, skip loading and render cached results
+    if (state.agentResults) {
+      renderStep4Results(state.agentResults);
       return;
     }
 
-    renderAgentLoading();
+    // Clear containers
+    var featuredContainer = getEl('route-featured-container');
+    var otherContainer = getEl('other-routes-container');
+    var agentSection = getEl('agent-analysis-section');
+    if (featuredContainer) featuredContainer.innerHTML = '';
+    if (otherContainer) otherContainer.innerHTML = '';
+    if (agentSection) agentSection.innerHTML = '';
+
+    // Hide simulation & save until results arrive
+    var simSection = getEl('simulation-section');
+    if (simSection) simSection.style.display = 'none';
+    var saveInline = document.querySelector('.save-inline');
+    if (saveInline) saveInline.style.display = 'none';
+
+    // Loading title
+    var titleEl = getEl('step4-title');
+    var leadEl = getEl('step4-lead');
+    if (titleEl) titleEl.innerHTML = 'AIが<em>あなたの回答</em>を<br>分析しています...';
+    if (leadEl) leadEl.innerHTML = '4人の専門エージェントがあなたのギャップと優先順位を分析し、最適な選択肢を導き出します。';
+
+    // Agent progress indicators
+    if (featuredContainer) {
+      featuredContainer.innerHTML =
+        '<div class="agent-loading-panel">' +
+          '<div class="agent-progress-list">' +
+            '<div class="agent-progress-item" id="progress-career-strategist">' +
+              '<span class="agent-icon">C</span><span class="agent-name">キャリア戦略家</span>' +
+              '<span class="agent-status loading">分析中...</span>' +
+            '</div>' +
+            '<div class="agent-progress-item" id="progress-life-planner">' +
+              '<span class="agent-icon">L</span><span class="agent-name">ライフ設計士</span>' +
+              '<span class="agent-status loading">分析中...</span>' +
+            '</div>' +
+            '<div class="agent-progress-item" id="progress-income-analyst">' +
+              '<span class="agent-icon">I</span><span class="agent-name">収入アナリスト</span>' +
+              '<span class="agent-status loading">分析中...</span>' +
+            '</div>' +
+            '<div class="agent-progress-item" id="progress-psychology-coach">' +
+              '<span class="agent-icon">P</span><span class="agent-name">心理・動機分析官</span>' +
+              '<span class="agent-status loading">分析中...</span>' +
+            '</div>' +
+          '</div>' +
+          '<div class="agent-synthesizing" id="agent-synthesizing" hidden>' +
+            '<span class="synthesizing-dot"></span>シニアコンサルタントが統合分析中...' +
+          '</div>' +
+        '</div>';
+    }
+
+    // Start AI analysis
+    runAgentAnalysis();
+  }
+
+  function renderStep4Results(result) {
+    var total = AREAS.reduce(function (sum, area) { return sum + (state.scores[area] || 5); }, 0);
+    var avg = (total / AREAS.length).toFixed(1);
+    var topGapArea = state.priorityOrder[0] || AREAS[0];
+
+    // Update title & lead
+    var titleEl = getEl('step4-title');
+    var leadEl = getEl('step4-lead');
+    if (titleEl) {
+      titleEl.innerHTML = 'あなたは、<em>' + escapeHtml(topGapArea) + '</em>を<br>重点的に変えたいと感じています。';
+    }
+    if (leadEl) {
+      leadEl.innerHTML = '平均 <strong>' + avg + '/10</strong>、最大ギャップは<strong>「' + escapeHtml(topGapArea) + '」</strong>。<br>AIが4つのルートを導き出しました。';
+    }
+
+    // Split options into recommended + others
+    var options = (result && result.options) || [];
+    var recommended = null;
+    var others = [];
+    options.forEach(function (opt) {
+      if (opt.recommended && !recommended) recommended = opt;
+      else others.push(opt);
+    });
+    if (!recommended && options.length > 0) {
+      recommended = options[0];
+      others = options.slice(1);
+    }
+
+    renderFeaturedRoute(recommended);
+    renderOtherRoutes(others);
+
+    // Show simulation & save
+    renderSimulation();
+    var saveInline = document.querySelector('.save-inline');
+    if (saveInline) saveInline.style.display = '';
+  }
+
+  function renderFeaturedRoute(aiOption) {
+    var container = getEl('route-featured-container');
+    if (!container) return;
+
+    var opt = RECOMMENDED_OPTION;
+    var title = aiOption ? fixUGS(aiOption.title || aiOption.type || opt.title) : opt.title;
+    var subtitle = aiOption ? fixUGS(aiOption.summary || opt.subtitle) : opt.subtitle;
+
+    var statsHtml = opt.hero.stats.map(function (s) {
+      return '<div class="case-stat"><div class="case-stat-k">' + escapeHtml(s.k) + '</div><div class="case-stat-v">' + escapeHtml(s.v) + '</div></div>';
+    }).join('');
+
+    // CASE STUDY story: always show static sections
+    var storySectionsHtml = opt.sections.map(function (sec, i) {
+      return (
+        '<div class="route-plan-row">' +
+          '<div class="route-plan-num">0' + (i + 1) + '</div>' +
+          '<div>' +
+            '<h4 class="route-plan-h">' + escapeHtml(sec.h) + '</h4>' +
+            '<p class="route-plan-body">' + escapeHtml(sec.body) + '</p>' +
+          '</div>' +
+        '</div>'
+      );
+    }).join('');
+
+    // Rationale toggle - show from AI results or from cached state
+    var rationale = aiOption ? aiOption.rationale : null;
+    var rationaleHtml = renderRationaleToggle(rationale, 0);
+
+    container.innerHTML = (
+      '<article class="route-featured">' +
+
+        // 1. 選択肢（ルートヘッダー）
+        '<header class="route-featured-head">' +
+          '<div class="route-tag-row">' +
+            '<span class="route-tag-pill">推奨</span>' +
+            '<span class="route-code">ROUTE 01</span>' +
+          '</div>' +
+          '<h2 class="route-featured-title">' + escapeHtml(title) + '</h2>' +
+          '<p class="route-featured-sub">' + escapeHtml(subtitle) + '</p>' +
+        '</header>' +
+
+        // 2. 推奨の根拠
+        rationaleHtml +
+
+        // 3. ケーススタディ（ヒーロー + ストーリー一体）
+        '<div class="case-study-section">' +
+          '<div class="case-study-label">' +
+            '<div class="eyebrow">CASE STUDY</div>' +
+            '<h3 class="case-study-heading">成功事例</h3>' +
+          '</div>' +
+          '<div class="case-hero">' +
+            '<div class="case-hero-img">' +
+              '<img src="nogaki.jpeg" alt="' + escapeHtml(opt.hero.name) + '">' +
+              '<div class="case-hero-caption">グランドキャニオンにて</div>' +
+            '</div>' +
+            '<div class="case-hero-body">' +
+              '<div class="case-hero-eyebrow">' + escapeHtml(opt.hero.label) + '</div>' +
+              '<h3 class="case-hero-name">' + escapeHtml(opt.hero.name) + '</h3>' +
+              '<blockquote class="case-hero-quote">「' + escapeHtml(opt.hero.quote) + '」</blockquote>' +
+              '<div class="case-stats">' + statsHtml + '</div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="case-story">' +
+            '<div class="case-story-header">' +
+              '<div class="eyebrow">SUCCESS STORY</div>' +
+              '<h4 class="case-story-title">成功までのストーリー</h4>' +
+            '</div>' +
+            storySectionsHtml +
+          '</div>' +
+        '</div>' +
+
+      '</article>'
+    );
+
+    bindRationaleToggles();
+  }
+
+  function renderOtherRoutes(aiOptions) {
+    var container = getEl('other-routes-container');
+    if (!container) return;
+
+    var useAI = aiOptions && aiOptions.length > 0;
+    var options = useAI ? aiOptions : SAMPLE_OPTIONS;
+
+    var cardsHtml = options.map(function (o, idx) {
+      var title, body, tag, routeCode, chipsHtml, fitHtml, rationaleHtml;
+
+      if (useAI) {
+        title = fixUGS(o.title || o.type || '');
+        body = fixUGS(o.summary || '');
+        tag = o.type || 'ルート';
+        routeCode = 'ROUTE 0' + (idx + 2);
+        chipsHtml = '';
+        fitHtml = '';
+        rationaleHtml = renderRationaleToggle(o.rationale, idx + 1);
+      } else {
+        title = o.title;
+        body = o.body;
+        tag = o.tag;
+        routeCode = o.routeCode;
+        chipsHtml = o.chips.map(function (c) {
+          return '<span class="option-chip">' + escapeHtml(c) + '</span>';
+        }).join('');
+        fitHtml =
+          '<div class="route-fit">' +
+            '<div><span class="route-fit-k">向いている</span> ' + escapeHtml(o.fit.match) + '</div>' +
+            '<div><span class="route-fit-k route-fit-shadow">注意</span> ' + escapeHtml(o.fit.shadow) + '</div>' +
+          '</div>';
+        rationaleHtml = '';
+      }
+
+      return (
+        '<div class="route-card">' +
+          '<div class="route-card-meta">' +
+            '<span class="route-tag-pill route-tag-quiet">' + escapeHtml(tag) + '</span>' +
+            '<span class="route-code">' + escapeHtml(routeCode) + '</span>' +
+          '</div>' +
+          '<h3 class="route-card-title">' + escapeHtml(title) + '</h3>' +
+          '<p class="route-card-body">' + escapeHtml(body) + '</p>' +
+          '<div class="route-card-foot">' +
+            fitHtml +
+            (chipsHtml ? '<div class="option-meta">' + chipsHtml + '</div>' : '') +
+          '</div>' +
+          rationaleHtml +
+        '</div>'
+      );
+    }).join('');
+
+    container.innerHTML = (
+      '<div class="other-routes">' +
+        '<div class="other-routes-head">' +
+          '<div class="eyebrow">OTHER ROUTES</div>' +
+          '<h3 class="other-routes-h">他の選択肢</h3>' +
+        '</div>' +
+        cardsHtml +
+      '</div>'
+    );
+
+    bindRationaleToggles();
+  }
+
+  // ─── Agent analysis ────────────────────────────────────────────────────────
+  function updateAgentProgress(agentType, success) {
+    var el = getEl('progress-' + agentType);
+    if (!el) return;
+    var status = el.querySelector('.agent-status');
+    if (status) {
+      status.textContent = success ? '完了' : 'エラー';
+      status.className = 'agent-status ' + (success ? 'done' : 'error');
+    }
+  }
+
+  async function runAgentAnalysis() {
+    if (!window.CareerAgents) {
+      // Fallback to static content
+      renderStep4Results(null);
+      return;
+    }
 
     try {
-      const result = await window.CareerAgents.orchestrate(state, {
+      var result = await window.CareerAgents.orchestrate(state, {
         onAgentDone: function (agentType, res) {
           updateAgentProgress(agentType, res !== null);
-          const allDone = ['career-strategist', 'life-planner', 'income-analyst', 'psychology-coach']
+          var allDone = ['career-strategist', 'life-planner', 'income-analyst', 'psychology-coach']
             .every(function (t) {
-              const el = getEl('progress-' + t);
-              const s = el && el.querySelector('.agent-status');
+              var el = getEl('progress-' + t);
+              var s = el && el.querySelector('.agent-status');
               return s && (s.classList.contains('done') || s.classList.contains('error'));
             });
           if (allDone) {
-            const synthEl = getEl('agent-synthesizing');
+            var synthEl = getEl('agent-synthesizing');
             if (synthEl) synthEl.hidden = false;
           }
         }
       });
       state.agentResults = result;
-      renderAgentResults(result);
+      renderStep4Results(result);
     } catch (err) {
-      const container = getEl('option-cards');
-      if (container) {
-        container.innerHTML = '<div class="agent-error">分析中にエラーが発生しました。<br><small>' + escapeHtml(err.message) + '</small></div>';
-      }
+      console.error('Agent analysis error:', err);
+      renderStep4Results(null);
     }
   }
 
-  // ─── 履歴レンダリング ──────────────────────────────────────────────────
+  // ─── 10年放置シミュレーション ─────────────────────────────────────────────
+  function calcCompound(monthly, annualRate, years) {
+    var r = annualRate / 12;
+    var n = years * 12;
+    if (r === 0) return monthly * n;
+    return monthly * ((Math.pow(1 + r, n) - 1) / r);
+  }
 
+  function renderSimulation() {
+    var section = getEl('simulation-section');
+    if (!section) return;
+    section.style.display = 'block';
+
+    var incomeInput = getEl('sim-income');
+    var surplusInput = getEl('sim-surplus');
+
+    function update() {
+      var surplus = parseInt(surplusInput.value, 10) || 0;
+      var addAmount = 3;
+      var improved = surplus + addAmount;
+      var years = 10;
+      var rate = 0.03;
+
+      var currentTotal = surplus * 12 * years;
+      var improvedTotal = Math.round(calcCompound(improved, rate, years));
+      var diff = improvedTotal - currentTotal;
+
+      var resultEl = getEl('sim-result');
+      if (!resultEl) return;
+
+      resultEl.innerHTML =
+        '<div class="sim-comparison">' +
+          '<div class="sim-card sim-card-current">' +
+            '<span class="sim-card-label">今のまま10年間</span>' +
+            '<span class="sim-card-amount">' + currentTotal + '万円</span>' +
+            '<span class="sim-card-sub">月' + surplus + '万円 x 10年（貯蓄のみ）</span>' +
+          '</div>' +
+          '<div class="sim-card sim-card-improved">' +
+            '<span class="sim-card-label">月' + addAmount + '万円の余力を作れたら</span>' +
+            '<span class="sim-card-amount">' + improvedTotal + '万円</span>' +
+            '<span class="sim-card-sub">月' + improved + '万円 x 10年（年利3%運用）</span>' +
+          '</div>' +
+        '</div>' +
+        '<div class="sim-diff">' +
+          '<span class="sim-diff-label">10年後の差額</span>' +
+          '<span class="sim-diff-amount">+' + diff + '万円</span>' +
+        '</div>' +
+        '<p class="sim-message">' +
+          '<strong>月' + addAmount + '万円の余力を作るだけ</strong>で、10年後に<strong>' + diff + '万円</strong>の差が生まれます。<br><br>' +
+          'でも「どこから' + addAmount + '万円を作るか」は、<br>収入と支出の全体像を見ないとわかりません。<br><br>' +
+          'まずFPと一緒に<strong>キャッシュフローを整理</strong>してみませんか？' +
+        '</p>';
+    }
+
+    incomeInput.addEventListener('input', update);
+    surplusInput.addEventListener('input', update);
+    update();
+  }
+
+  // ─── History ──────────────────────────────────────────────────────────────
   function renderHistoryList(sessions) {
     return sessions.map(function (s) {
-      const date = new Date(s.created_at);
-      const dateStr = date.getFullYear() + '年' + (date.getMonth() + 1) + '月' + date.getDate() + '日 ' +
+      var date = new Date(s.created_at);
+      var dateStr = date.getFullYear() + '年' + (date.getMonth() + 1) + '月' + date.getDate() + '日 ' +
         ('0' + date.getHours()).slice(-2) + ':' + ('0' + date.getMinutes()).slice(-2);
-      const priorities = (s.priority_order || []).slice(0, 3);
-      const scores = s.scores || {};
-      const ideals = s.ideals || {};
-      const improvements = s.improvements || {};
+      var priorities = (s.priority_order || []).slice(0, 3);
+      var scores = s.scores || {};
+      var ideals = s.ideals || {};
+      var improvements = s.improvements || {};
+      var reasons = s.reasons || {};
 
-      const summaryItems = priorities.map(function (area, i) {
-        const score = scores[area] || '—';
-        const gap = score !== '—' ? (10 - score) + '点差' : '';
+      var summaryItems = priorities.map(function (area, i) {
+        var score = scores[area] || '-';
+        var gap = score !== '-' ? (10 - score) + '点差' : '';
         return '<span class="history-priority-item"><strong>' + (i + 1) + '位</strong> ' + area + '（' + score + '点/' + gap + '）</span>';
       }).join('');
 
-      const reasons = s.reasons || {};
-      const detailRows = (s.priority_order || []).map(function (area) {
-        const score = scores[area] || '—';
-        const ideal = ideals[area] || '—';
-        const reason = reasons[area] || '—';
-        const imp = improvements[area] || '—';
+      var detailRows = (s.priority_order || []).map(function (area) {
+        var score = scores[area] || '-';
+        var ideal = ideals[area] || '-';
+        var reason = reasons[area] || '-';
+        var imp = improvements[area] || '-';
         return (
           '<div class="history-detail-row">' +
             '<div class="history-detail-area">' + area + '（' + score + '点）</div>' +
@@ -758,29 +959,6 @@
         );
       }).join('');
 
-      // エージェント根拠を表示
-      var agentHtml = '';
-      var ar = s.agent_results;
-      if (ar && ar.options && ar.options.length > 0) {
-        agentHtml = '<div class="history-agent-results">' +
-          '<h4 class="history-agent-title">AIエージェント分析結果</h4>' +
-          ar.options.map(function (opt) {
-            var title = opt.title || opt.type || '';
-            var rat = opt.rationale || {};
-            var agentItems = '';
-            if (rat.career) agentItems += '<div class="history-rationale-item"><span class="agent-tag career">💼 キャリア戦略家</span><p>' + escapeHtml(rat.career) + '</p></div>';
-            if (rat.life) agentItems += '<div class="history-rationale-item"><span class="agent-tag life">🏠 ライフ設計士</span><p>' + escapeHtml(rat.life) + '</p></div>';
-            if (rat.income) agentItems += '<div class="history-rationale-item"><span class="agent-tag income">💰 収入アナリスト</span><p>' + escapeHtml(rat.income) + '</p></div>';
-            if (rat.psychology) agentItems += '<div class="history-rationale-item"><span class="agent-tag psych">🧠 心理分析官</span><p>' + escapeHtml(rat.psychology) + '</p></div>';
-            return '<div class="history-option-block">' +
-              '<h5 class="history-option-title">' + escapeHtml(title) + (opt.recommended ? ' <span class="recommended-badge-sm">推奨</span>' : '') + '</h5>' +
-              (opt.summary ? '<p class="history-option-summary">' + escapeHtml(opt.summary) + '</p>' : '') +
-              agentItems +
-            '</div>';
-          }).join('') +
-        '</div>';
-      }
-
       return (
         '<div class="history-item">' +
           '<div class="history-item-header">' +
@@ -788,95 +966,124 @@
             '<span class="history-item-date">' + dateStr + '</span>' +
           '</div>' +
           '<div class="history-item-summary">' + summaryItems + '</div>' +
-          '<button type="button" class="history-toggle">詳細を見る ▼</button>' +
-          '<div class="history-item-detail" style="display:none">' + detailRows + agentHtml + '</div>' +
+          '<button type="button" class="history-toggle">詳細を見る</button>' +
+          '<div class="history-item-detail" style="display:none">' + detailRows + '</div>' +
         '</div>'
       );
     }).join('');
   }
 
-  // ─── ステップ切り替え ──────────────────────────────────────────────────
-
-  function setStep(step) {
-    state.step = step;
-    document.querySelectorAll('.panel').forEach(function (p) { p.classList.remove('active'); });
-    const panel = getEl('panel-step' + step);
-    if (panel) {
-      panel.classList.add('active');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-    document.querySelectorAll('.step').forEach(function (el, i) {
-      const num = i + 1;
-      el.classList.remove('current', 'done');
-      if (num === step) el.classList.add('current');
-      else if (num < step) el.classList.add('done');
-    });
+  // ─── Modal helpers ────────────────────────────────────────────────────────
+  function openModal(id) {
+    var modal = getEl(id);
+    if (modal) modal.classList.remove('hidden');
   }
 
-  // ─── イベントバインド ──────────────────────────────────────────────────
+  function closeModal(id) {
+    var modal = getEl(id);
+    if (modal) modal.classList.add('hidden');
+  }
 
+  // ─── Event binding ────────────────────────────────────────────────────────
   function bindEvents() {
-    var b;
+    // Landing
+    var btnStart = getEl('btn-landing-start');
+    if (btnStart) btnStart.addEventListener('click', function () {
+      showTool();
+      renderStep1();
+      setStep(1);
+    });
 
-    b = getEl('btn-to-step2');
-    if (b) b.addEventListener('click', function () {
+    var btnLandingHistory = getEl('btn-landing-history');
+    if (btnLandingHistory) btnLandingHistory.addEventListener('click', function () {
+      openModal('history-modal');
+    });
+
+    // Step navigation
+    var btnToStep2 = getEl('btn-to-step2');
+    if (btnToStep2) btnToStep2.addEventListener('click', function () {
       collectStep1();
       renderStep2();
       setStep(2);
-      saveToLocal();
     });
 
-    b = getEl('btn-back-step1');
-    if (b) b.addEventListener('click', function () {
+    var btnBackStep1 = getEl('btn-back-step1');
+    if (btnBackStep1) btnBackStep1.addEventListener('click', function () {
       collectStep2();
       renderStep1();
       setStep(1);
-      saveToLocal();
     });
 
-    b = getEl('btn-to-step3');
-    if (b) b.addEventListener('click', function () {
+    var btnToStep3 = getEl('btn-to-step3');
+    if (btnToStep3) btnToStep3.addEventListener('click', function () {
       collectStep2();
-      state.priorityOrder = []; // ギャップ順をリセット（スコアが変わった可能性）
+      state.priorityOrder = [];
       renderStep3();
       setStep(3);
-      saveToLocal();
     });
 
-    b = getEl('btn-back-step2');
-    if (b) b.addEventListener('click', function () {
+    var btnBackStep2 = getEl('btn-back-step2');
+    if (btnBackStep2) btnBackStep2.addEventListener('click', function () {
       collectImprovements();
       renderStep2();
       setStep(2);
-      saveToLocal();
     });
 
-    b = getEl('btn-to-step4');
-    if (b) b.addEventListener('click', function () {
+    var btnToStep4 = getEl('btn-to-step4');
+    if (btnToStep4) btnToStep4.addEventListener('click', function () {
       collectImprovements();
       renderStep4();
       setStep(4);
-      saveToLocal();
     });
 
-    b = getEl('btn-back-step3');
-    if (b) b.addEventListener('click', function () {
+    var btnBackStep3 = getEl('btn-back-step3');
+    if (btnBackStep3) btnBackStep3.addEventListener('click', function () {
       renderStep3();
       setStep(3);
-      saveToLocal();
     });
 
-    b = getEl('btn-pdf');
-    if (b) b.addEventListener('click', function () {
+    var btnPdf = getEl('btn-pdf');
+    if (btnPdf) btnPdf.addEventListener('click', function () {
       window.print();
     });
 
-    // 保存する（btnSave にローカル変数でキャプチャ）
+    // Sidebar step navigation (click to jump)
+    document.querySelectorAll('.step-item').forEach(function (el) {
+      el.addEventListener('click', function () {
+        var targetStep = parseInt(el.getAttribute('data-step'), 10);
+        if (targetStep === state.step) return;
+        // Collect current step's data before jumping
+        if (state.step === 1) collectStep1();
+        else if (state.step === 2) collectStep2();
+        else if (state.step === 3) collectImprovements();
+
+        // Render target step
+        if (targetStep === 1) renderStep1();
+        else if (targetStep === 2) renderStep2();
+        else if (targetStep === 3) renderStep3();
+        else if (targetStep === 4) renderStep4();
+
+        setStep(targetStep);
+      });
+    });
+
+    // Sidebar buttons
+    var btnSidebarHistory = getEl('btn-sidebar-history');
+    if (btnSidebarHistory) btnSidebarHistory.addEventListener('click', function () {
+      openModal('history-modal');
+    });
+
+    var btnSidebarSave = getEl('btn-sidebar-save');
+    if (btnSidebarSave) btnSidebarSave.addEventListener('click', function () {
+      openModal('save-modal');
+    });
+
+    // Save inline (Step 4)
     var btnSave = getEl('btn-save');
     if (btnSave) btnSave.addEventListener('click', async function () {
-      const name = (getEl('save-name') || {}).value || '';
-      const email = (getEl('save-email') || {}).value || '';
-      const status = getEl('save-status');
+      var name = (getEl('save-name') || {}).value || '';
+      var email = (getEl('save-email') || {}).value || '';
+      var status = getEl('save-status');
       if (!name.trim()) {
         if (status) { status.textContent = '氏名を入力してください。'; status.className = 'save-status error'; }
         return;
@@ -886,41 +1093,32 @@
         return;
       }
       btnSave.disabled = true;
-      btnSave.textContent = '保存中…';
-      const { error } = await saveSession(name, email);
-      if (error) {
+      btnSave.textContent = '保存中...';
+      var result = await saveSession(name, email);
+      if (result.error) {
         btnSave.disabled = false;
         btnSave.textContent = '保存する';
-        if (status) { status.textContent = '保存に失敗しました：' + error.message; status.className = 'save-status error'; }
+        if (status) { status.textContent = '保存に失敗しました：' + (result.error.message || result.error); status.className = 'save-status error'; }
       } else {
-        btnSave.textContent = '保存済み ✓';
+        btnSave.textContent = '保存済み';
         if (status) { status.textContent = '保存しました！このメールアドレスで後から見返せます。'; status.className = 'save-status success'; }
-        clearLocal(); // 完了保存後は下書きをクリア
       }
     });
 
-    // 途中保存モーダルを開く
-    b = getEl('btn-autosave');
-    if (b) b.addEventListener('click', function () {
-      var modal = getEl('autosave-modal');
-      if (modal) modal.hidden = false;
+    // Save modal
+    var btnModalClose = getEl('btn-modal-close');
+    if (btnModalClose) btnModalClose.addEventListener('click', function () { closeModal('save-modal'); });
+
+    var saveModalBackdrop = getEl('save-modal');
+    if (saveModalBackdrop) saveModalBackdrop.addEventListener('click', function (e) {
+      if (e.target === saveModalBackdrop) closeModal('save-modal');
     });
 
-    // 途中保存モーダルを閉じる
-    b = getEl('btn-close-autosave');
-    if (b) b.addEventListener('click', function () {
-      var modal = getEl('autosave-modal');
-      if (modal) modal.hidden = true;
-      var st = getEl('autosave-status');
-      if (st) { st.textContent = ''; st.className = 'save-status'; }
-    });
-
-    // 途中保存実行
-    var btnDoAutosave = getEl('btn-do-autosave');
-    if (btnDoAutosave) btnDoAutosave.addEventListener('click', async function () {
-      var name = (getEl('autosave-name') || {}).value || '';
-      var email = (getEl('autosave-email') || {}).value || '';
-      var status = getEl('autosave-status');
+    var btnModalSave = getEl('btn-modal-save');
+    if (btnModalSave) btnModalSave.addEventListener('click', async function () {
+      var name = (getEl('modal-save-name') || {}).value || '';
+      var email = (getEl('modal-save-email') || {}).value || '';
+      var status = getEl('modal-save-status');
       if (!name.trim()) {
         if (status) { status.textContent = '氏名を入力してください。'; status.className = 'save-status error'; }
         return;
@@ -929,75 +1127,74 @@
         if (status) { status.textContent = 'メールアドレスを正しく入力してください。'; status.className = 'save-status error'; }
         return;
       }
-      collectCurrentInputs();
-      btnDoAutosave.disabled = true;
-      btnDoAutosave.textContent = '保存中…';
-      var { error } = await saveSession(name, email);
-      if (error) {
-        btnDoAutosave.disabled = false;
-        btnDoAutosave.textContent = '途中保存する';
-        if (status) { status.textContent = '保存に失敗しました：' + error.message; status.className = 'save-status error'; }
+      // Collect latest data
+      if (state.step === 1) collectStep1();
+      else if (state.step === 2) collectStep2();
+      else if (state.step === 3) collectImprovements();
+
+      btnModalSave.disabled = true;
+      btnModalSave.textContent = '保存中...';
+      var result = await saveSession(name, email);
+      if (result.error) {
+        btnModalSave.disabled = false;
+        btnModalSave.textContent = '保存する';
+        if (status) { status.textContent = '保存に失敗しました：' + (result.error.message || result.error); status.className = 'save-status error'; }
       } else {
-        btnDoAutosave.disabled = false;
-        btnDoAutosave.textContent = '途中保存する';
-        if (status) { status.textContent = 'ステップ' + state.step + 'の状態を保存しました！'; status.className = 'save-status success'; }
-        // name/emailをlocalStorageにも記憶（次回の手間を省く）
-        try { localStorage.setItem('corecara_user', JSON.stringify({ name: name.trim(), email: email.trim().toLowerCase() })); } catch (e) {}
+        btnModalSave.textContent = '保存済み';
+        if (status) { status.textContent = '保存しました！'; status.className = 'save-status success'; }
       }
     });
 
-    // 過去の記録モーダルを開く
-    b = getEl('btn-open-history');
-    if (b) b.addEventListener('click', function () {
-      const modal = getEl('history-modal');
-      if (modal) modal.hidden = false;
-    });
-
-    // モーダルを閉じる
-    b = getEl('btn-close-history');
-    if (b) b.addEventListener('click', function () {
-      const modal = getEl('history-modal');
-      if (modal) modal.hidden = true;
-      const list = getEl('history-list');
+    // History modal
+    var btnHistoryClose = getEl('btn-history-close');
+    if (btnHistoryClose) btnHistoryClose.addEventListener('click', function () {
+      closeModal('history-modal');
+      var list = getEl('history-list');
       if (list) list.innerHTML = '';
-      const st = getEl('history-status');
+      var st = getEl('history-status');
       if (st) { st.textContent = ''; st.className = 'save-status'; }
     });
 
-    // 記録を読み込む（btnLoad にローカル変数でキャプチャ）
-    var btnLoad = getEl('btn-load-history');
-    if (btnLoad) btnLoad.addEventListener('click', async function () {
-      const email = (getEl('history-email') || {}).value || '';
-      const status = getEl('history-status');
-      const list = getEl('history-list');
+    var historyBackdrop = getEl('history-modal');
+    if (historyBackdrop) historyBackdrop.addEventListener('click', function (e) {
+      if (e.target === historyBackdrop) {
+        closeModal('history-modal');
+      }
+    });
+
+    var btnLoadHistory = getEl('btn-load-history');
+    if (btnLoadHistory) btnLoadHistory.addEventListener('click', async function () {
+      var email = (getEl('history-email') || {}).value || '';
+      var status = getEl('history-status');
+      var list = getEl('history-list');
       if (!email.trim() || !email.includes('@')) {
         if (status) { status.textContent = 'メールアドレスを正しく入力してください。'; status.className = 'save-status error'; }
         return;
       }
-      btnLoad.disabled = true;
-      btnLoad.textContent = '読み込み中…';
-      const { data, error } = await loadSessions(email);
-      btnLoad.disabled = false;
-      btnLoad.textContent = '記録を見る';
-      if (error) {
+      btnLoadHistory.disabled = true;
+      btnLoadHistory.textContent = '読み込み中...';
+      var result = await loadSessions(email);
+      btnLoadHistory.disabled = false;
+      btnLoadHistory.textContent = '記録を見る';
+      if (result.error) {
         if (status) { status.textContent = '読み込みに失敗しました。'; status.className = 'save-status error'; }
         return;
       }
-      if (!data || data.length === 0) {
-        if (status) { status.textContent = 'この메ールアドレスの記録は見つかりませんでした。'; status.className = 'save-status error'; }
+      if (!result.data || result.data.length === 0) {
+        if (status) { status.textContent = 'このメールアドレスの記録は見つかりませんでした。'; status.className = 'save-status error'; }
         if (list) list.innerHTML = '';
         return;
       }
-      if (status) { status.textContent = data.length + '件の記録が見つかりました。'; status.className = 'save-status success'; }
+      if (status) { status.textContent = result.data.length + '件の記録が見つかりました。'; status.className = 'save-status success'; }
       if (list) {
-        list.innerHTML = renderHistoryList(data);
+        list.innerHTML = renderHistoryList(result.data);
         list.querySelectorAll('.history-toggle').forEach(function (btn) {
           btn.addEventListener('click', function () {
-            const detail = btn.nextElementSibling;
+            var detail = btn.nextElementSibling;
             if (detail) {
-              const isHidden = detail.style.display === 'none' || detail.style.display === '';
+              var isHidden = detail.style.display === 'none' || detail.style.display === '';
               detail.style.display = isHidden ? 'flex' : 'none';
-              btn.textContent = isHidden ? '詳細を閉じる ▲' : '詳細を見る ▼';
+              btn.textContent = isHidden ? '詳細を閉じる' : '詳細を見る';
             }
           });
         });
@@ -1005,50 +1202,8 @@
     });
   }
 
-  // ─── 初期化 ────────────────────────────────────────────────────────────
-
-  // 自動保存インジケーターを追加
-  var indicator = document.createElement('div');
-  indicator.id = 'autosave-indicator';
-  indicator.className = 'autosave-indicator';
-  indicator.textContent = '自動保存しました';
-  document.body.appendChild(indicator);
-
-  renderStep1();
-  setStep(1);
+  // ─── Init ─────────────────────────────────────────────────────────────────
+  showLanding();
   bindEvents();
-
-  // localStorage に下書きがあれば再開バナーを表示
-  var draft = loadFromLocal();
-  if (draft && draft.step && draft.step > 1) {
-    var banner = getEl('resume-banner');
-    if (banner) banner.hidden = false;
-
-    var btnYes = getEl('btn-resume-yes');
-    var btnNo = getEl('btn-resume-no');
-
-    if (btnYes) btnYes.addEventListener('click', function () {
-      restoreFromDraft(draft);
-      banner.hidden = true;
-    });
-
-    if (btnNo) btnNo.addEventListener('click', function () {
-      clearLocal();
-      banner.hidden = true;
-    });
-  } else if (draft && draft.step === 1) {
-    // Step1でも入力途中のデータがあれば静かに復元
-    var hasData = Object.keys(draft.ideals || {}).some(function (k) { return draft.ideals[k]; });
-    if (hasData) {
-      restoreFromDraft(draft);
-    }
-  }
-
-  // 途中保存モーダルに前回のname/emailを復元
-  try {
-    var savedUser = JSON.parse(localStorage.getItem('corecara_user') || '{}');
-    if (savedUser.name) { var nameEl = getEl('autosave-name'); if (nameEl) nameEl.value = savedUser.name; }
-    if (savedUser.email) { var emailEl = getEl('autosave-email'); if (emailEl) emailEl.value = savedUser.email; }
-  } catch (e) {}
 
 })();

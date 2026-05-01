@@ -6,156 +6,288 @@
   <title>これから。｜理想と現実のギャップ → 選択肢</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700&family=Zen+Maru+Gothic:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;600;700&family=Noto+Serif+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-  <div class="container">
-    <header class="header">
-      <h1 class="logo">
-        <img src="logo.png" alt="これから。" class="logo-img">
-      </h1>
-      <p class="tagline">「このままでいいのか。」を最初に相談する場所</p>
-      <button type="button" id="btn-open-history" class="btn-history-link">過去の記録を見る</button>
-      <button type="button" id="btn-autosave" class="btn-autosave-link">途中保存する</button>
-    </header>
 
-    <!-- ステップインジケーター -->
-    <nav class="step-indicator" aria-label="進捗">
-      <ol class="steps">
-        <li class="step" data-step="1">
-          <span class="step-num">1</span>
-          <span class="step-label">理想を決める</span>
-        </li>
-        <li class="step" data-step="2">
-          <span class="step-num">2</span>
-          <span class="step-label">現状を入力する</span>
-        </li>
-        <li class="step" data-step="3">
-          <span class="step-num">3</span>
-          <span class="step-label">ギャップを確認する</span>
-        </li>
-        <li class="step" data-step="4">
-          <span class="step-num">4</span>
-          <span class="step-label">選択肢を見る</span>
-        </li>
-      </ol>
-    </nav>
+  <!-- ===== Landing Page ===== -->
+  <div id="landing" class="landing">
+    <div class="landing-left">
+      <div class="landing-brand">
+        <div class="landing-brand-mark">こ</div>
+        <div class="landing-brand-text">これから。</div>
+      </div>
+      <div class="landing-hero">
+        <div class="eyebrow">CAREER &middot; GAP DIAGNOSIS</div>
+        <h1>
+          「このままで<br>
+          <span class="accent">いいのか。</span>」を<br>
+          最初に相談する場所。
+        </h1>
+        <p>
+          6つの領域で「理想」と「現状」を可視化し、ギャップから次の一歩の<strong>選択肢</strong>を見つけるツールです。所要15分。
+        </p>
+        <div class="landing-cta">
+          <button type="button" id="btn-landing-start" class="btn btn-primary">はじめる <span>&rarr;</span></button>
+          <button type="button" id="btn-landing-history" class="btn btn-ghost">過去の記録を見る</button>
+        </div>
+      </div>
+      <div class="landing-meta">
+        <div><strong>6</strong>つの領域</div>
+        <div><strong>4</strong>ステップ</div>
+        <div><strong>~15</strong>分で完了</div>
+      </div>
+    </div>
+    <div class="landing-right">
+      <div class="visual-stack">
+        <div class="visual-card" style="left:0;top:8%;width:62%;transform:rotate(-3deg)">
+          <div style="font-size:10px;letter-spacing:0.18em;color:var(--ink-mute);margin-bottom:6px">IDEAL</div>
+          <div style="font-family:var(--font-serif);font-size:15px;line-height:1.6">
+            週3でリモート、家族との<br>時間が確保できる働き方。
+          </div>
+        </div>
+        <div class="visual-card" style="right:0;top:32%;width:70%;transform:rotate(2deg)">
+          <div style="font-size:10px;letter-spacing:0.18em;color:var(--ink-mute);margin-bottom:8px">RADAR</div>
+          <svg viewBox="0 0 120 120" style="width:100%;height:110px">
+            <polygon points="60,24 91,42 91,78 60,96 29,78 29,42" fill="none" stroke="var(--line)" stroke-width="0.8"/>
+            <polygon points="60,36 79,48 79,72 60,84 41,72 41,48" fill="none" stroke="var(--line)" stroke-width="0.8"/>
+            <polygon points="60,48 67,54 67,66 60,72 53,66 53,54" fill="none" stroke="var(--line)" stroke-width="0.8"/>
+            <polygon points="60,32 86,47 74,78 46,78 34,47" fill="var(--sage)" fill-opacity="0.4" stroke="var(--sage-deep)" stroke-width="1.5"/>
+          </svg>
+        </div>
+        <div class="visual-card" style="left:12%;bottom:4%;width:74%;transform:rotate(-1deg)">
+          <div style="font-size:10px;letter-spacing:0.18em;color:var(--sage-deep);margin-bottom:6px">CHOICE</div>
+          <div style="font-family:var(--font-serif);font-size:14px;line-height:1.6">
+            4つの方向から、<br>次の一歩を選びましょう。
+          </div>
+          <div style="display:flex;gap:4px;margin-top:10px">
+            <span style="font-size:9px;padding:3px 8px;border-radius:99px;background:var(--paper-deep);border:1px solid var(--line);color:var(--ink-soft);letter-spacing:0.1em">STAY</span>
+            <span style="font-size:9px;padding:3px 8px;border-radius:99px;background:var(--paper-deep);border:1px solid var(--line);color:var(--ink-soft);letter-spacing:0.1em">SHIFT</span>
+            <span style="font-size:9px;padding:3px 8px;border-radius:99px;background:var(--paper-deep);border:1px solid var(--line);color:var(--ink-soft);letter-spacing:0.1em">GROW</span>
+            <span style="font-size:9px;padding:3px 8px;border-radius:99px;background:var(--paper-deep);border:1px solid var(--line);color:var(--ink-soft);letter-spacing:0.1em">LEAP</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
+  <!-- ===== Tool App (2-column layout) ===== -->
+  <div id="app" class="app hidden">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">こ</div>
+        <div class="brand-name">これから。</div>
+        <div class="brand-sub">CAREER &middot; GAP &middot; CHOICE</div>
+      </div>
+
+      <div class="step-nav">
+        <div class="step-nav-label">Process</div>
+        <button type="button" class="step-item active" data-step="1">
+          <div class="step-num">1</div>
+          <div class="step-text">
+            <div class="step-title">理想を決める</div>
+            <div class="step-desc">10点満点の基準を描く</div>
+          </div>
+        </button>
+        <button type="button" class="step-item" data-step="2">
+          <div class="step-num">2</div>
+          <div class="step-text">
+            <div class="step-title">現状を入力する</div>
+            <div class="step-desc">今の点数を正直に</div>
+          </div>
+        </button>
+        <button type="button" class="step-item" data-step="3">
+          <div class="step-num">3</div>
+          <div class="step-text">
+            <div class="step-title">ギャップを確認する</div>
+            <div class="step-desc">差分と改善点を整理</div>
+          </div>
+        </button>
+        <button type="button" class="step-item" data-step="4">
+          <div class="step-num">4</div>
+          <div class="step-text">
+            <div class="step-title">選択肢を見る</div>
+            <div class="step-desc">次の一歩を選ぶ</div>
+          </div>
+        </button>
+      </div>
+
+      <div class="sidebar-foot">
+        <button type="button" id="btn-sidebar-history" class="sidebar-link">
+          <span class="dot"></span>過去の記録を見る
+        </button>
+        <button type="button" id="btn-sidebar-save" class="sidebar-link">
+          <span class="dot"></span>途中保存する
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main content -->
     <main class="main">
 
-      <!-- Step 1: 理想の状態 -->
+      <!-- Step 1: 理想を決める -->
       <section id="panel-step1" class="panel active">
-        <p class="narrative">6つの領域それぞれで「理想の状態」を書いてください。この内容が<strong>10点満点の基準</strong>になります。</p>
-        <form id="form-step1" class="form-areas">
-          <!-- JSで生成 -->
-        </form>
-        <div class="panel-actions actions-right">
-          <button type="button" id="btn-to-step2" class="btn btn-primary" disabled>次へ：現状を入力する →</button>
+        <div class="progress-pill"><span class="num">01</span> / 04 &middot; IDEAL</div>
+        <h1 class="h-display">
+          まずは、あなたの<em>理想の状態</em>を<br>言葉にしてみましょう。
+        </h1>
+        <p class="lead">
+          6つの領域それぞれで「こうなっていたい」という状態を、
+          できるだけ <strong>具体的な情景</strong> として書いてください。
+          この一文が、これから測る<strong>10点満点の基準</strong>になります。
+        </p>
+        <div id="domain-list" class="domain-list">
+          <!-- JS generates -->
+        </div>
+        <div class="actions actions-end">
+          <button type="button" id="btn-to-step2" class="btn btn-primary" disabled>次へ：現状を入力する <span>&rarr;</span></button>
         </div>
       </section>
 
       <!-- Step 2: 現状スコア -->
       <section id="panel-step2" class="panel">
-        <p class="narrative">各領域の「現在の状態」は何点ですか？理想が10点として、正直に選んでください。</p>
+        <div class="progress-pill"><span class="num">02</span> / 04 &middot; CURRENT</div>
+        <h1 class="h-display">
+          いまの状態を、<em>正直に</em>。<br>理想を10点として点をつけます。
+        </h1>
+        <p class="lead">
+          悲観的になりすぎず、楽観的になりすぎず。
+          <strong>「数字を見て自分が違和感を持たない点数」</strong>を選び、
+          その<strong>理由</strong>を一言添えてください。
+        </p>
         <div id="score-list" class="score-list">
-          <!-- JSで生成 -->
+          <!-- JS generates -->
         </div>
-        <div class="panel-actions actions-between">
-          <button type="button" id="btn-back-step1" class="btn btn-secondary">← 戻る</button>
-          <button type="button" id="btn-to-step3" class="btn btn-primary">次へ：ギャップを確認する →</button>
+        <div class="actions actions-spread">
+          <button type="button" id="btn-back-step1" class="btn btn-ghost">&larr; 戻る</button>
+          <button type="button" id="btn-to-step3" class="btn btn-primary">次へ：ギャップを確認する <span>&rarr;</span></button>
         </div>
       </section>
 
-      <!-- Step 3: ギャップ確認 + 改善内容 + 優先順位 -->
+      <!-- Step 3: ギャップ確認 -->
       <section id="panel-step3" class="panel">
-        <p class="narrative">各領域のギャップを確認しながら、<strong>具体的に何が改善されれば理想に近づくか</strong>を書き出してください。↑↓で優先順位を並び替えられます。</p>
-        <div id="gap-detail-list" class="gap-detail-list">
-          <!-- JSで生成 -->
+        <div class="progress-pill"><span class="num">03</span> / 04 &middot; GAP</div>
+        <h1 class="h-display">
+          <em>差分</em>が見えてきました。<br>どこから動かしますか。
+        </h1>
+        <p class="lead">
+          ギャップの大きい順に並んでいます。
+          各領域で <strong>「何が改善されれば理想に近づくか」</strong> を書き出し、
+          ドラッグまたは矢印で <strong>取り組む順番</strong> を決めてください。
+        </p>
+        <div class="gap-grid">
+          <div class="radar-card">
+            <div class="radar-title">RADAR &middot; 理想 vs 現状</div>
+            <svg id="radar-svg" viewBox="0 0 320 320" class="radar-svg"></svg>
+          </div>
+          <div id="bars-card" class="bars-card">
+            <div class="radar-title">GAP DETAIL</div>
+            <!-- JS generates bar rows -->
+          </div>
         </div>
-        <div class="panel-actions actions-between">
-          <button type="button" id="btn-back-step2" class="btn btn-secondary">← 戻る</button>
-          <button type="button" id="btn-to-step4" class="btn btn-primary">選択肢を見る →</button>
+        <div id="imp-list" class="imp-list">
+          <!-- JS generates -->
+        </div>
+        <div class="actions actions-spread">
+          <button type="button" id="btn-back-step2" class="btn btn-ghost">&larr; 戻る</button>
+          <button type="button" id="btn-to-step4" class="btn btn-primary">選択肢を見る <span>&rarr;</span></button>
         </div>
       </section>
 
-      <!-- Step 4: 選択肢の提示 -->
+      <!-- Step 4: 選択肢 -->
       <section id="panel-step4" class="panel">
-        <p class="bridge-message" id="bridge-message"></p>
-        <div id="option-cards" class="option-cards">
-          <!-- JSで生成 -->
+        <div class="progress-pill"><span class="num">04</span> / 04 &middot; CHOICE</div>
+        <h1 class="h-display" id="step4-title"></h1>
+        <p class="lead" id="step4-lead"></p>
+
+        <!-- Featured Route -->
+        <div id="route-featured-container">
+          <!-- JS generates -->
         </div>
 
-        <!-- 保存セクション -->
-        <div class="save-section">
-          <h3 class="save-title">この結果を保存する</h3>
-          <p class="save-desc">氏名とメールアドレスを入力すると、後からいつでも見返せます。</p>
-          <div class="save-form">
-            <input type="text" id="save-name" placeholder="氏名（例：山田 太郎）" class="email-input">
-            <input type="email" id="save-email" placeholder="your@email.com" class="email-input">
-            <button type="button" id="btn-save" class="btn btn-accent">保存する</button>
+        <!-- Agent analysis toggle (inserted after featured route) -->
+        <div id="agent-analysis-section"></div>
+
+        <!-- Other Routes -->
+        <div id="other-routes-container">
+          <!-- JS generates -->
+        </div>
+
+        <!-- Save inline -->
+        <div class="save-inline">
+          <div class="eyebrow">SAVE</div>
+          <h3 class="save-inline-h">この結果を保存する</h3>
+          <p class="save-inline-p">氏名とメールアドレスを入力すると、後からいつでも見返せます。</p>
+          <div class="save-inline-form">
+            <input type="text" id="save-name" placeholder="氏名（例：山田 太郎）">
+            <input type="email" id="save-email" placeholder="you@example.com">
+            <button type="button" id="btn-save" class="btn btn-primary">保存する</button>
           </div>
           <p id="save-status" class="save-status"></p>
         </div>
 
-        <div class="panel-actions actions-between">
-          <button type="button" id="btn-back-step3" class="btn btn-secondary">← 戻る</button>
-          <button type="button" id="btn-pdf" class="btn btn-accent">PDFで保存</button>
+        <!-- 10年放置シミュレーション -->
+        <div id="simulation-section" class="simulation-section" style="display:none">
+          <h3 class="simulation-title">このまま10年、何も変えなかったら？</h3>
+          <div class="simulation-inputs">
+            <div class="sim-input-group">
+              <label for="sim-income">月収（手取り）</label>
+              <div class="sim-input-wrap"><input type="number" id="sim-income" value="30" min="1" max="999" class="sim-input"><span class="sim-unit">万円</span></div>
+            </div>
+            <div class="sim-input-group">
+              <label for="sim-surplus">毎月の余力</label>
+              <div class="sim-input-wrap"><input type="number" id="sim-surplus" value="2" min="0" max="999" class="sim-input"><span class="sim-unit">万円</span></div>
+            </div>
+          </div>
+          <div id="sim-result" class="sim-result"></div>
+        </div>
+
+        <div class="actions actions-spread">
+          <button type="button" id="btn-back-step3" class="btn btn-ghost">&larr; 戻る</button>
+          <button type="button" id="btn-pdf" class="btn btn-ghost">PDFで保存</button>
         </div>
       </section>
 
     </main>
-
-    <footer class="footer">
-      <p>Unicara「これから。」キャリア支援ツール</p>
-    </footer>
   </div>
-  <!-- 途中保存モーダル -->
-  <div id="autosave-modal" class="modal-overlay" hidden>
-    <div class="modal-content">
-      <div class="modal-header">
-        <h2 class="modal-title">途中保存</h2>
-        <button type="button" id="btn-close-autosave" class="modal-close">&times;</button>
+
+  <!-- ===== Save Modal ===== -->
+  <div id="save-modal" class="modal-backdrop hidden">
+    <div class="modal" onclick="event.stopPropagation()">
+      <button type="button" id="btn-modal-close" class="modal-close">&times;</button>
+      <div class="eyebrow">SAVE</div>
+      <h3>この結果を保存する</h3>
+      <p>氏名とメールアドレスを入力すると、<br>後からいつでも見返せます。</p>
+      <div class="field">
+        <label>氏名</label>
+        <input type="text" id="modal-save-name" placeholder="山田 太郎">
       </div>
-      <div class="modal-body">
-        <p class="save-desc">氏名とメールアドレスを入力すると、途中の状態をサーバーに保存できます。<br>同じメールアドレスで「過去の記録を見る」から再開できます。</p>
-        <div class="save-form">
-          <input type="text" id="autosave-name" placeholder="氏名（例：山田 太郎）" class="email-input">
-          <input type="email" id="autosave-email" placeholder="your@email.com" class="email-input">
-          <button type="button" id="btn-do-autosave" class="btn btn-accent">途中保存する</button>
-        </div>
-        <p id="autosave-status" class="save-status"></p>
+      <div class="field">
+        <label>メールアドレス</label>
+        <input type="email" id="modal-save-email" placeholder="you@example.com">
       </div>
+      <button type="button" id="btn-modal-save" class="btn btn-primary" style="width:100%;justify-content:center">保存する</button>
+      <p id="modal-save-status" class="save-status"></p>
     </div>
   </div>
 
-  <!-- 再開確認バナー -->
-  <div id="resume-banner" class="resume-banner" hidden>
-    <div class="resume-banner-inner">
-      <p class="resume-text">前回の入力データが残っています。続きから再開しますか？</p>
-      <div class="resume-actions">
-        <button type="button" id="btn-resume-yes" class="btn btn-primary">続きから再開</button>
-        <button type="button" id="btn-resume-no" class="btn btn-secondary">最初からやり直す</button>
+  <!-- ===== History Modal ===== -->
+  <div id="history-modal" class="modal-backdrop hidden">
+    <div class="modal" style="max-width:680px" onclick="event.stopPropagation()">
+      <button type="button" id="btn-history-close" class="modal-close">&times;</button>
+      <div class="eyebrow">HISTORY</div>
+      <h3>過去の記録</h3>
+      <p>保存時に使ったメールアドレスを入力してください。</p>
+      <div class="history-email-form">
+        <input type="email" id="history-email" placeholder="保存時に使ったメールアドレス" class="history-input">
+        <button type="button" id="btn-load-history" class="btn btn-primary">記録を見る</button>
       </div>
-    </div>
-  </div>
-
-  <!-- 過去の記録モーダル -->
-  <div id="history-modal" class="modal-overlay" hidden>
-    <div class="modal-content">
-      <div class="modal-header">
-        <h2 class="modal-title">過去の記録</h2>
-        <button type="button" id="btn-close-history" class="modal-close">×</button>
-      </div>
-      <div class="modal-body">
-        <div class="history-email-form">
-          <input type="email" id="history-email" placeholder="保存時に使ったメールアドレス" class="email-input">
-          <button type="button" id="btn-load-history" class="btn btn-primary">記録を見る</button>
-        </div>
-        <p id="history-status" class="save-status"></p>
-        <div id="history-list" class="history-list"></div>
-      </div>
+      <p id="history-status" class="save-status"></p>
+      <div id="history-list" class="history-list"></div>
     </div>
   </div>
 
