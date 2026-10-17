@@ -1,3 +1,5 @@
+import Anthropic from 'npm:@anthropic-ai/sdk@0.135.0';
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -220,49 +222,43 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    const apiKey = Deno.env.get('GROQ_API_KEY');
-    if (!apiKey) {
-      return new Response(JSON.stringify({ error: 'GROQ_API_KEY not set' }), {
+    if (!Deno.env.get('ANTHROPIC_API_KEY')) {
+      return new Response(JSON.stringify({ error: 'ANTHROPIC_API_KEY not set' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    const requestBody = JSON.stringify({
-      model: 'llama-3.1-8b-instant',
-      temperature: 0.7,
-      max_tokens: agentType === 'synthesizer' ? 2500 : 700,
+    // ANTHROPIC_API_KEY を Supabase の Secrets から読む
+    const anthropic = new Anthropic();
+
+    // レート制限・一時エラーはSDKが自動でリトライする（既定2回）
+    // 4エージェントは速さ優先でeffort low、統合は medium
+    const response = await anthropic.beta.messages.create({
+      model: 'claude-opus-5-5',
+      max_tokens: 16000,
+      output_config: { effort: agentType === 'synthesizer' ? 'medium' : 'low' },
+      betas: ['server-side-fallback-2026-07-01'],
+      fallbacks: 'default',
+      system: systemPrompt,
       messages: [
-        { role: 'system', content: systemPrompt },
         { role: 'user', content: `以下のユーザーデータを分析してください:\n\n${JSON.stringify(userInput, null, 2)}` }
       ],
-    });
+    } as any);
 
-    // レート制限時は最大3回リトライ
-    let data: any;
-    for (let attempt = 0; attempt < 3; attempt++) {
-      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + apiKey,
-        },
-        body: requestBody,
+    if (response.stop_reason === 'refusal') {
+      return new Response(JSON.stringify({ error: 'Claude declined the request' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
-      data = await response.json();
-      if (data.choices?.[0]?.message?.content) break;
-      // 429レート制限の場合は待ってリトライ
-      if ((data.error?.message || '').includes('Rate limit') || (data.error?.message || '').includes('rate_limit')) {
-        await new Promise(resolve => setTimeout(resolve, 20000));
-      } else {
-        break;
-      }
     }
 
-    const text = data.choices?.[0]?.message?.content;
+    const text = response.content
+      .filter((block: any) => block.type === 'text')
+      .map((block: any) => block.text)
+      .join('');
     if (!text) {
-      const groqError = data.error?.message || data.error?.type || JSON.stringify(data);
-      return new Response(JSON.stringify({ error: 'Groq error: ' + groqError }), {
+      return new Response(JSON.stringify({ error: 'Claude returned no text (stop_reason: ' + response.stop_reason + ')' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
