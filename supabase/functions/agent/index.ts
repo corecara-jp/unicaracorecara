@@ -271,7 +271,7 @@ Deno.serve(async (req: Request) => {
     // レート制限・一時エラーはSDKが自動でリトライする（既定2回）
     // 4エージェントは速さ優先でeffort low、統合は medium
     const response = await anthropic.beta.messages.create({
-      model: 'claude-opus-5-5',
+      model: 'claude-sonnet-5-5',
       max_tokens: 16000,
       output_config: agentType === 'synthesizer'
         ? { effort: 'medium', format: { type: 'json_schema', schema: SYNTHESIZER_SCHEMA } }
