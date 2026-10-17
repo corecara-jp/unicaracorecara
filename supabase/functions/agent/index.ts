@@ -230,7 +230,7 @@ Deno.serve(async (req: Request) => {
 
     const requestBody = JSON.stringify({
       model: 'claude-sonnet-4-6',
-      max_tokens: agentType === 'synthesizer' ? 2500 : 700,
+      max_tokens: agentType === 'synthesizer' ? 8000 : 700,
       system: systemPrompt,
       messages: [
         { role: 'user', content: `以下のユーザーデータを分析してください:\n\n${JSON.stringify(userInput, null, 2)}` }
