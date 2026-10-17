@@ -1,5 +1,3 @@
-import Anthropic from 'npm:@anthropic-ai/sdk@0.135.0';
-
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -206,42 +204,6 @@ const AGENT_PROMPTS: Record<string, string> = {
 }`
 };
 
-// 統合結果は画面にそのまま描画するため、JSONの形をAPI側で保証させる（構造化出力）
-const SYNTHESIZER_SCHEMA = {
-  type: 'object',
-  properties: {
-    options: {
-      type: 'array',
-      items: {
-        type: 'object',
-        properties: {
-          type: { type: 'string', enum: ['転職＋副業', '現職＋副業', '転職のみ', '現状の見直し'] },
-          recommended: { type: 'boolean' },
-          title: { type: 'string' },
-          summary: { type: 'string' },
-          rationale: {
-            type: 'object',
-            properties: {
-              career: { type: 'string' },
-              life: { type: 'string' },
-              income: { type: 'string' },
-              psychology: { type: 'string' },
-            },
-            required: ['career', 'life', 'income', 'psychology'],
-            additionalProperties: false,
-          },
-          nextAction: { type: 'string' },
-          risk: { type: 'string' },
-        },
-        required: ['type', 'recommended', 'title', 'summary', 'rationale', 'nextAction', 'risk'],
-        additionalProperties: false,
-      },
-    },
-  },
-  required: ['options'],
-  additionalProperties: false,
-};
-
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -258,45 +220,48 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    if (!Deno.env.get('ANTHROPIC_API_KEY')) {
+    const apiKey = Deno.env.get('ANTHROPIC_API_KEY');
+    if (!apiKey) {
       return new Response(JSON.stringify({ error: 'ANTHROPIC_API_KEY not set' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // ANTHROPIC_API_KEY を Supabase の Secrets から読む
-    const anthropic = new Anthropic();
-
-    // レート制限・一時エラーはSDKが自動でリトライする（既定2回）
-    // 4エージェントは速さ優先でeffort low、統合は medium
-    const response = await anthropic.beta.messages.create({
-      model: 'claude-sonnet-5-5',
-      max_tokens: 16000,
-      output_config: agentType === 'synthesizer'
-        ? { effort: 'medium', format: { type: 'json_schema', schema: SYNTHESIZER_SCHEMA } }
-        : { effort: 'low' },
-      betas: ['server-side-fallback-2026-07-01'],
-      fallbacks: 'default',
+    const requestBody = JSON.stringify({
+      model: 'claude-sonnet-4-6',
+      max_tokens: agentType === 'synthesizer' ? 2500 : 700,
       system: systemPrompt,
       messages: [
         { role: 'user', content: `以下のユーザーデータを分析してください:\n\n${JSON.stringify(userInput, null, 2)}` }
       ],
-    } as any);
+    });
 
-    if (response.stop_reason === 'refusal') {
-      return new Response(JSON.stringify({ error: 'Claude declined the request' }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    // レート制限時は最大3回リトライ
+    let data: any;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+        },
+        body: requestBody,
       });
+      data = await response.json();
+      if (data.content?.[0]?.text) break;
+      if (data.error?.type === 'rate_limit_error') {
+        await new Promise(resolve => setTimeout(resolve, 20000));
+      } else {
+        break;
+      }
     }
 
-    const text = response.content
-      .filter((block: any) => block.type === 'text')
-      .map((block: any) => block.text)
-      .join('');
+    const text = data.content?.[0]?.text;
     if (!text) {
-      return new Response(JSON.stringify({ error: 'Claude returned no text (stop_reason: ' + response.stop_reason + ')' }), {
+      const apiError = data.error?.message || data.error?.type || JSON.stringify(data);
+      return new Response(JSON.stringify({ error: 'Claude API error: ' + apiError }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
