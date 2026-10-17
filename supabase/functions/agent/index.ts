@@ -220,20 +220,19 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    const apiKey = Deno.env.get('GROQ_API_KEY');
+    const apiKey = Deno.env.get('ANTHROPIC_API_KEY');
     if (!apiKey) {
-      return new Response(JSON.stringify({ error: 'GROQ_API_KEY not set' }), {
+      return new Response(JSON.stringify({ error: 'ANTHROPIC_API_KEY not set' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
     const requestBody = JSON.stringify({
-      model: 'llama-3.1-8b-instant',
-      temperature: 0.7,
+      model: 'claude-haiku-4-5-20251001',
       max_tokens: agentType === 'synthesizer' ? 2500 : 700,
+      system: systemPrompt,
       messages: [
-        { role: 'system', content: systemPrompt },
         { role: 'user', content: `以下のユーザーデータを分析してください:\n\n${JSON.stringify(userInput, null, 2)}` }
       ],
     });
@@ -241,28 +240,28 @@ Deno.serve(async (req: Request) => {
     // レート制限時は最大3回リトライ
     let data: any;
     for (let attempt = 0; attempt < 3; attempt++) {
-      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + apiKey,
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
         },
         body: requestBody,
       });
       data = await response.json();
-      if (data.choices?.[0]?.message?.content) break;
-      // 429レート制限の場合は待ってリトライ
-      if ((data.error?.message || '').includes('Rate limit') || (data.error?.message || '').includes('rate_limit')) {
+      if (data.content?.[0]?.text) break;
+      if (data.error?.type === 'rate_limit_error') {
         await new Promise(resolve => setTimeout(resolve, 20000));
       } else {
         break;
       }
     }
 
-    const text = data.choices?.[0]?.message?.content;
+    const text = data.content?.[0]?.text;
     if (!text) {
-      const groqError = data.error?.message || data.error?.type || JSON.stringify(data);
-      return new Response(JSON.stringify({ error: 'Groq error: ' + groqError }), {
+      const apiError = data.error?.message || data.error?.type || JSON.stringify(data);
+      return new Response(JSON.stringify({ error: 'Claude API error: ' + apiError }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
