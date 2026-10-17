@@ -206,6 +206,42 @@ const AGENT_PROMPTS: Record<string, string> = {
 }`
 };
 
+// 統合結果は画面にそのまま描画するため、JSONの形をAPI側で保証させる（構造化出力）
+const SYNTHESIZER_SCHEMA = {
+  type: 'object',
+  properties: {
+    options: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          type: { type: 'string', enum: ['転職＋副業', '現職＋副業', '転職のみ', '現状の見直し'] },
+          recommended: { type: 'boolean' },
+          title: { type: 'string' },
+          summary: { type: 'string' },
+          rationale: {
+            type: 'object',
+            properties: {
+              career: { type: 'string' },
+              life: { type: 'string' },
+              income: { type: 'string' },
+              psychology: { type: 'string' },
+            },
+            required: ['career', 'life', 'income', 'psychology'],
+            additionalProperties: false,
+          },
+          nextAction: { type: 'string' },
+          risk: { type: 'string' },
+        },
+        required: ['type', 'recommended', 'title', 'summary', 'rationale', 'nextAction', 'risk'],
+        additionalProperties: false,
+      },
+    },
+  },
+  required: ['options'],
+  additionalProperties: false,
+};
+
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -237,7 +273,9 @@ Deno.serve(async (req: Request) => {
     const response = await anthropic.beta.messages.create({
       model: 'claude-opus-5-5',
       max_tokens: 16000,
-      output_config: { effort: agentType === 'synthesizer' ? 'medium' : 'low' },
+      output_config: agentType === 'synthesizer'
+        ? { effort: 'medium', format: { type: 'json_schema', schema: SYNTHESIZER_SCHEMA } }
+        : { effort: 'low' },
       betas: ['server-side-fallback-2026-07-01'],
       fallbacks: 'default',
       system: systemPrompt,
