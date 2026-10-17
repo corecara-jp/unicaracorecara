@@ -1729,10 +1729,57 @@ input, textarea { font-family: inherit; }
   .sim-comparison { grid-template-columns: 1fr; }
 }
 
+/* ============== Print summary (PDF用まとめ) ============== */
+.print-summary { display: none; }
+.print-summary-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  border-bottom: 1px solid var(--sage-deep);
+  padding-bottom: 8px;
+  margin-bottom: 20px;
+}
+.print-date { font-size: 12px; color: var(--ink-mute); }
+.print-h {
+  font-family: var(--font-serif);
+  font-size: 17px;
+  font-weight: 600;
+  margin: 20px 0 10px;
+}
+.print-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+  line-height: 1.6;
+}
+.print-table th,
+.print-table td {
+  border: 1px solid #cfcabd;
+  padding: 6px 8px;
+  vertical-align: top;
+  text-align: left;
+}
+.print-table thead th,
+.print-table tbody th,
+.print-profile th {
+  background: var(--sage-mist);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.print-profile th { width: 22%; }
+.print-gap-table thead th:nth-child(3),
+.print-gap-table thead th:nth-child(4),
+.print-gap-table thead th:nth-child(6) { width: 26%; }
+.print-rank, .print-gap { text-align: center !important; white-space: nowrap; }
+.print-gap { color: var(--accent-warn); font-weight: 600; }
+.print-gap-table tr { break-inside: avoid; }
+
 /* ============== Print ============== */
 @media print {
+  .print-summary { display: block; break-after: page; }
+  .print-table th, .print-table td { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .sidebar, .landing, .actions, .save-inline, .simulation-section,
-  #panel-step1, #panel-step2, #panel-step3,
+  #panel-step0, #panel-step1, #panel-step2, #panel-step3,
   .progress-pill, .agent-toggle-section,
   .modal-backdrop, #btn-pdf, #btn-back-step3 {
     display: none !important;
