@@ -46,6 +46,13 @@
     { id: 'life', name: '生活', en: 'Life', glyph: '活', placeholder: '例：朝7時起き・夜23時就寝のリズム。週2で運動、月1で家族旅行ができている。' },
   ];
 
+  var PROFILE_FIELDS = [
+    { key: 'age', name: '年齢', en: 'Age', glyph: '齢', rows: 1, placeholder: '例：28歳' },
+    { key: 'education', name: '学歴', en: 'Education', glyph: '学', rows: 2, placeholder: '例：〇〇大学 経済学部 卒業（2019年3月）' },
+    { key: 'history', name: '現職までの経緯', en: 'Career', glyph: '歴', rows: 4, placeholder: '例：新卒で地方銀行に入行し法人営業を3年。2022年に現職のIT企業へ転職し、インサイドセールスを担当。' },
+    { key: 'reason', name: '転職をしたいと思った理由', en: 'Reason', glyph: '由', rows: 4, placeholder: '例：評価が年功序列で、成果を出しても収入に反映されない。30歳までに年収を上げられる環境に移りたい。' },
+  ];
+
   var REASON_PLACEHOLDERS = {
     '収入': '例：月収30万で毎月の余力が2万円しかない。旅行も自己投資もできず、このままで大丈夫か不安',
     '働き方': '例：残業月40時間で副業や勉強の時間がゼロ。収入の柱が給料だけで将来が不安',
@@ -96,7 +103,8 @@
   // ─── State ────────────────────────────────────────────────────────────────
   var state = {
     view: 'landing',  // 'landing' | 'tool'
-    step: 1,
+    step: 0,
+    profile: {},
     ideals: {},
     scores: {},
     reasons: {},
@@ -160,6 +168,47 @@
         numEl.textContent = s;
       }
     });
+  }
+
+  // ─── Step 0: 面談メモ ──────────────────────────────────────────────────────
+  function renderStep0() {
+    var container = getEl('profile-list');
+    if (!container) return;
+
+    container.innerHTML = PROFILE_FIELDS.map(function (f) {
+      return (
+        '<div class="domain-row" data-profile="' + f.key + '">' +
+          '<div class="domain-icon">' + f.glyph + '</div>' +
+          '<div>' +
+            '<div class="domain-name">' + f.name + '</div>' +
+            '<div class="domain-name-sub">' + f.en + '</div>' +
+          '</div>' +
+          '<textarea class="ideal-input" id="profile-' + f.key + '" ' +
+            'placeholder="' + escapeHtml(f.placeholder) + '" rows="' + f.rows + '">' +
+            escapeHtml(state.profile[f.key] || '') +
+          '</textarea>' +
+        '</div>'
+      );
+    }).join('');
+  }
+
+  function collectStep0() {
+    PROFILE_FIELDS.forEach(function (f) {
+      var ta = getEl('profile-' + f.key);
+      if (ta) state.profile[f.key] = ta.value.trim();
+    });
+  }
+
+  function hasProfile() {
+    return PROFILE_FIELDS.some(function (f) { return !!state.profile[f.key]; });
+  }
+
+  // 現在のステップの入力を state に取り込む
+  function collectCurrentStep() {
+    if (state.step === 0) collectStep0();
+    else if (state.step === 1) collectStep1();
+    else if (state.step === 2) collectStep2();
+    else if (state.step === 3) collectImprovements();
   }
 
   // ─── Step 1: 理想を決める ──────────────────────────────────────────────────
@@ -607,6 +656,8 @@
     if (simSection) simSection.style.display = 'none';
     var saveInline = document.querySelector('.save-inline');
     if (saveInline) saveInline.style.display = 'none';
+    var kotobaInline = getEl('kotoba-inline');
+    if (kotobaInline) kotobaInline.style.display = 'none';
 
     // Loading title
     var titleEl = getEl('step4-title');
@@ -681,6 +732,8 @@
     renderSimulation();
     var saveInline = document.querySelector('.save-inline');
     if (saveInline) saveInline.style.display = '';
+    var kotobaInline = getEl('kotoba-inline');
+    if (kotobaInline) kotobaInline.style.display = '';
   }
 
   function renderFeaturedRoute(aiOption) {
@@ -926,6 +979,123 @@
     update();
   }
 
+  // ─── PDF用のまとめ ─────────────────────────────────────────────────────────
+  function multiline(s) {
+    return escapeHtml(s || '').replace(/\n/g, '<br>');
+  }
+
+  function renderPrintSummary() {
+    var el = getEl('print-summary');
+    if (!el) return;
+    initPriorityOrder();
+
+    var profileHtml = '';
+    if (hasProfile()) {
+      profileHtml =
+        '<h2 class="print-h">面談メモ</h2>' +
+        '<table class="print-table print-profile">' +
+          PROFILE_FIELDS.map(function (f) {
+            return '<tr><th>' + f.name + '</th><td>' + (multiline(state.profile[f.key]) || '-') + '</td></tr>';
+          }).join('') +
+        '</table>';
+    }
+
+    var rows = state.priorityOrder.map(function (area, idx) {
+      var s = state.scores[area] || 5;
+      var gap = 10 - s;
+      return (
+        '<tr>' +
+          '<td class="print-rank">' + (idx + 1) + '</td>' +
+          '<th>' + area + '</th>' +
+          '<td>' + (multiline(state.ideals[area]) || '-') + '</td>' +
+          '<td><strong>' + s + ' / 10</strong><br>' + (multiline(state.reasons[area]) || '') + '</td>' +
+          '<td class="print-gap">' + (gap === 0 ? '達成' : '-' + gap) + '</td>' +
+          '<td>' + (multiline(state.improvements[area]) || '-') + '</td>' +
+        '</tr>'
+      );
+    }).join('');
+
+    el.innerHTML =
+      '<div class="print-summary-head">' +
+        '<div class="eyebrow">これから。 SUMMARY</div>' +
+        '<div class="print-date">' + formatToday() + '</div>' +
+      '</div>' +
+      profileHtml +
+      '<h2 class="print-h">理想と現状のギャップ</h2>' +
+      '<table class="print-table print-gap-table">' +
+        '<thead><tr>' +
+          '<th>順位</th><th>領域</th><th>理想（10点の状態）</th><th>現状の点数と理由</th><th>ギャップ</th><th>改善したいこと</th>' +
+        '</tr></thead>' +
+        '<tbody>' + rows + '</tbody>' +
+      '</table>';
+  }
+
+  function formatToday() {
+    var d = new Date();
+    return d.getFullYear() + '年' + (d.getMonth() + 1) + '月' + d.getDate() + '日';
+  }
+
+  // ─── KOTOBA連携 ───────────────────────────────────────────────────────────
+  function buildKotobaText() {
+    initPriorityOrder();
+    var lines = ['【これから。ツールの結果】（' + formatToday() + '）', ''];
+
+    if (hasProfile()) {
+      lines.push('■ 面談メモ');
+      PROFILE_FIELDS.forEach(function (f) {
+        lines.push(f.name + '：' + (state.profile[f.key] || '-'));
+      });
+      lines.push('');
+    }
+
+    lines.push('■ 理想と現状（取り組む順）');
+    state.priorityOrder.forEach(function (area, idx) {
+      var s = state.scores[area] || 5;
+      var gap = 10 - s;
+      lines.push((idx + 1) + '. ' + area + '（現状 ' + s + '/10・' + (gap === 0 ? '達成' : 'ギャップ -' + gap) + '）');
+      lines.push('　理想：' + (state.ideals[area] || '-'));
+      lines.push('　現状：' + (state.reasons[area] || '-'));
+      lines.push('　改善したいこと：' + (state.improvements[area] || '-'));
+    });
+
+    var options = (state.agentResults && state.agentResults.options) || [];
+    if (options.length) {
+      var recommended = options.filter(function (o) { return o.recommended; })[0] || options[0];
+      lines.push('');
+      lines.push('■ なりたい姿・叶えたい転職（AI分析）');
+      lines.push('推奨：' + fixUGS(recommended.title || recommended.type || ''));
+      if (recommended.summary) lines.push('　' + fixUGS(recommended.summary));
+      var others = options.filter(function (o) { return o !== recommended; });
+      if (others.length) {
+        lines.push('他の選択肢：');
+        others.forEach(function (o) {
+          lines.push('・' + fixUGS(o.title || o.type || '') + (o.summary ? '：' + fixUGS(o.summary) : ''));
+        });
+      }
+    }
+
+    return lines.join('\n');
+  }
+
+  function copyText(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+      return navigator.clipboard.writeText(text);
+    }
+    // http などでクリップボードAPIが使えない場合
+    return new Promise(function (resolve, reject) {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      var ok = false;
+      try { ok = document.execCommand('copy'); } catch (_) {}
+      document.body.removeChild(ta);
+      ok ? resolve() : reject(new Error('copy failed'));
+    });
+  }
+
   // ─── History ──────────────────────────────────────────────────────────────
   function renderHistoryList(sessions) {
     return sessions.map(function (s) {
@@ -990,8 +1160,8 @@
     var btnStart = getEl('btn-landing-start');
     if (btnStart) btnStart.addEventListener('click', function () {
       showTool();
-      renderStep1();
-      setStep(1);
+      renderStep0();
+      setStep(0);
     });
 
     var btnLandingHistory = getEl('btn-landing-history');
@@ -1000,6 +1170,20 @@
     });
 
     // Step navigation
+    var btnToStep1 = getEl('btn-to-step1');
+    if (btnToStep1) btnToStep1.addEventListener('click', function () {
+      collectStep0();
+      renderStep1();
+      setStep(1);
+    });
+
+    var btnBackStep0 = getEl('btn-back-step0');
+    if (btnBackStep0) btnBackStep0.addEventListener('click', function () {
+      collectStep1();
+      renderStep0();
+      setStep(0);
+    });
+
     var btnToStep2 = getEl('btn-to-step2');
     if (btnToStep2) btnToStep2.addEventListener('click', function () {
       collectStep1();
@@ -1044,7 +1228,18 @@
 
     var btnPdf = getEl('btn-pdf');
     if (btnPdf) btnPdf.addEventListener('click', function () {
+      renderPrintSummary();
       window.print();
+    });
+
+    var btnKotobaCopy = getEl('btn-kotoba-copy');
+    if (btnKotobaCopy) btnKotobaCopy.addEventListener('click', function () {
+      var status = getEl('kotoba-status');
+      copyText(buildKotobaText()).then(function () {
+        if (status) { status.textContent = 'コピーしました。KOTOBAの「面談記録」に貼り付けてください。'; status.className = 'save-status success'; }
+      }, function () {
+        if (status) { status.textContent = 'コピーできませんでした。もう一度押してください。'; status.className = 'save-status error'; }
+      });
     });
 
     // Sidebar step navigation (click to jump)
@@ -1053,12 +1248,11 @@
         var targetStep = parseInt(el.getAttribute('data-step'), 10);
         if (targetStep === state.step) return;
         // Collect current step's data before jumping
-        if (state.step === 1) collectStep1();
-        else if (state.step === 2) collectStep2();
-        else if (state.step === 3) collectImprovements();
+        collectCurrentStep();
 
         // Render target step
-        if (targetStep === 1) renderStep1();
+        if (targetStep === 0) renderStep0();
+        else if (targetStep === 1) renderStep1();
         else if (targetStep === 2) renderStep2();
         else if (targetStep === 3) renderStep3();
         else if (targetStep === 4) renderStep4();
@@ -1128,9 +1322,7 @@
         return;
       }
       // Collect latest data
-      if (state.step === 1) collectStep1();
-      else if (state.step === 2) collectStep2();
-      else if (state.step === 3) collectImprovements();
+      collectCurrentStep();
 
       btnModalSave.disabled = true;
       btnModalSave.textContent = '保存中...';

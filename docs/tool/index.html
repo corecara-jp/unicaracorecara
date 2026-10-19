@@ -86,7 +86,14 @@
 
       <div class="step-nav">
         <div class="step-nav-label">Process</div>
-        <button type="button" class="step-item active" data-step="1">
+        <button type="button" class="step-item active" data-step="0">
+          <div class="step-num">0</div>
+          <div class="step-text">
+            <div class="step-title">面談メモ</div>
+            <div class="step-desc">年齢・経緯・転職理由</div>
+          </div>
+        </button>
+        <button type="button" class="step-item" data-step="1">
           <div class="step-num">1</div>
           <div class="step-text">
             <div class="step-title">理想を決める</div>
@@ -129,8 +136,27 @@
     <!-- Main content -->
     <main class="main">
 
+      <!-- Step 0: 面談メモ -->
+      <section id="panel-step0" class="panel active">
+        <div class="progress-pill"><span class="num">00</span> / 04 &middot; PROFILE</div>
+        <h1 class="h-display">
+          はじめに、<em>これまでのこと</em>を<br>聞かせてください。
+        </h1>
+        <p class="lead">
+          面談で確認した内容をメモしておきます。
+          どの項目も<strong>空欄のままで先に進めます</strong>。
+          ここに書いた内容は、最後のPDFとKOTOBA用のまとめにも載ります。
+        </p>
+        <div id="profile-list" class="domain-list">
+          <!-- JS generates -->
+        </div>
+        <div class="actions actions-end">
+          <button type="button" id="btn-to-step1" class="btn btn-primary">次へ：理想を決める <span>&rarr;</span></button>
+        </div>
+      </section>
+
       <!-- Step 1: 理想を決める -->
-      <section id="panel-step1" class="panel active">
+      <section id="panel-step1" class="panel">
         <div class="progress-pill"><span class="num">01</span> / 04 &middot; IDEAL</div>
         <h1 class="h-display">
           まずは、あなたの<em>理想の状態</em>を<br>言葉にしてみましょう。
@@ -143,7 +169,8 @@
         <div id="domain-list" class="domain-list">
           <!-- JS generates -->
         </div>
-        <div class="actions actions-end">
+        <div class="actions actions-spread">
+          <button type="button" id="btn-back-step0" class="btn btn-ghost">&larr; 戻る</button>
           <button type="button" id="btn-to-step2" class="btn btn-primary" disabled>次へ：現状を入力する <span>&rarr;</span></button>
         </div>
       </section>
@@ -201,6 +228,10 @@
       <!-- Step 4: 選択肢 -->
       <section id="panel-step4" class="panel">
         <div class="progress-pill"><span class="num">04</span> / 04 &middot; CHOICE</div>
+
+        <!-- PDF用のまとめ（画面には出さず、印刷時だけ先頭に出す） -->
+        <div id="print-summary" class="print-summary"></div>
+
         <h1 class="h-display" id="step4-title"></h1>
         <p class="lead" id="step4-lead"></p>
 
@@ -228,6 +259,15 @@
             <button type="button" id="btn-save" class="btn btn-primary">保存する</button>
           </div>
           <p id="save-status" class="save-status"></p>
+        </div>
+
+        <!-- KOTOBA連携 -->
+        <div id="kotoba-inline" class="save-inline kotoba-inline" style="display:none">
+          <div class="eyebrow">KOTOBA</div>
+          <h3 class="save-inline-h">KOTOBAに渡す</h3>
+          <p class="save-inline-p">面談メモ・理想と現状・AI分析の結果を1つの文章にまとめてコピーします。KOTOBAの「面談記録」に貼り付けてください。</p>
+          <button type="button" id="btn-kotoba-copy" class="btn btn-primary">KOTOBA用にコピー</button>
+          <p id="kotoba-status" class="save-status"></p>
         </div>
 
         <!-- 10年放置シミュレーション -->
